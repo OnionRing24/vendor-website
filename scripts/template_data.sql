@@ -2,18 +2,18 @@ use storedb;
 
 
 
-INSERT INTO account VALUES (NULL, 'john', 'doe', 'jdoe@email', 'admin123', 'password123', 'admin');
-INSERT INTO account VALUES (NULL, 'jane', 'doe', 'janedoe@email', 'admin456', 'password123', 'admin');
+INSERT INTO account VALUES (NULL, 'john', 'doe', 'jdoe@email', 'admin123', 'password123', 'admin', now());
+INSERT INTO account VALUES (NULL, 'jane', 'doe', 'janedoe@email', 'admin456', 'password123', 'admin', now());
 
-INSERT INTO account VALUES (NULL, 'john', 'vendor', 'jvendor@email', 'vendor123', 'password123', 'vendor');
-INSERT INTO account VALUES (NULL, 'jane', 'vendor', 'janevendor@email', 'vendor456', 'password123', 'vendor');
-INSERT INTO account VALUES (NULL, 'joe', 'vendor', 'joevendor@email', 'vendor789', 'password123', 'vendor');
+INSERT INTO account VALUES (NULL, 'john', 'vendor', 'jvendor@email', 'vendor123', 'password123', 'vendor', now());
+INSERT INTO account VALUES (NULL, 'jane', 'vendor', 'janevendor@email', 'vendor456', 'password123', 'vendor', now());
+INSERT INTO account VALUES (NULL, 'joe', 'vendor', 'joevendor@email', 'vendor789', 'password123', 'vendor', now());
 
-INSERT INTO account VALUES (NULL, 'john', 'customer', 'jcustomer@email', 'customer123', 'password123', 'customer');
-INSERT INTO account VALUES (NULL, 'jane', 'customer', 'janecustomer@email', 'customer456', 'password123', 'customer');
-INSERT INTO account VALUES (NULL, 'joe', 'customer', 'joecustomer@email', 'customer789', 'password123', 'customer');
-INSERT INTO account VALUES (NULL, 'alice', 'customer', 'alicecustomer@email', 'customer246', 'password123', 'customer');
-INSERT INTO account VALUES (NULL, 'tom', 'customer', 'tomcustomer@email', 'customer135', 'password123', 'customer');
+INSERT INTO account VALUES (NULL, 'john', 'customer', 'jcustomer@email', 'customer123', 'password123', 'customer', now());
+INSERT INTO account VALUES (NULL, 'jane', 'customer', 'janecustomer@email', 'customer456', 'password123', 'customer', now());
+INSERT INTO account VALUES (NULL, 'joe', 'customer', 'joecustomer@email', 'customer789', 'password123', 'customer', now());
+INSERT INTO account VALUES (NULL, 'alice', 'customer', 'alicecustomer@email', 'customer246', 'password123', 'customer', now());
+INSERT INTO account VALUES (NULL, 'tom', 'customer', 'tomcustomer@email', 'customer135', 'password123', 'customer', now());
 
 
 

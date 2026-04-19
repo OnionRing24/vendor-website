@@ -10,6 +10,7 @@ CREATE TABLE account (
   username varchar(50),
   password varchar(100),
   role ENUM ('customer', 'vendor', 'admin'),
+  created_at datetime DEFAULT now(),
   UNIQUE KEY (account_id, role)
 );
 
@@ -68,7 +69,7 @@ CREATE TABLE orders (
     order_id int auto_increment PRIMARY KEY,
     customer_id int,
     customer_role ENUM('customer', 'vendor', 'admin') DEFAULT 'customer' NOT NULL,
-    order_date timestamp DEFAULT (now()),
+    order_date timestamp DEFAULT now(),
     total_items int DEFAULT 0,
     total_amount float,
     order_confirmed bool DEFAULT false,
@@ -126,7 +127,7 @@ CREATE TABLE participant (
   conversation_id int,
   account_id int,
   username varchar(50),
-  PRIMARY KEY (conversation_id, account_id), -- Prevents same user joining twice
+  PRIMARY KEY (conversation_id, account_id),
   FOREIGN KEY (conversation_id) REFERENCES conversation (conversation_id),
   FOREIGN KEY (account_id) REFERENCES account (account_id)
 );
@@ -137,15 +138,13 @@ CREATE TABLE message (
   sender_id int,
   message_content text,
   message_image text DEFAULT NULL,
-  sent_at timestamp DEFAULT (now()),
+  sent_at timestamp DEFAULT now(),
   is_read boolean DEFAULT false,
   FOREIGN KEY (conversation_id) REFERENCES conversation (conversation_id),
   FOREIGN KEY (sender_id) REFERENCES account (account_id)
 );
 
 
-
-use storedb;
 
 DELIMITER //
 
@@ -386,18 +385,19 @@ END //
 DELIMITER ;
 
 
-INSERT INTO account VALUES (NULL, 'john', 'doe', 'jdoe@email', 'admin123', 'password123', 'admin');
-INSERT INTO account VALUES (NULL, 'jane', 'doe', 'janedoe@email', 'admin456', 'password123', 'admin');
 
-INSERT INTO account VALUES (NULL, 'john', 'vendor', 'jvendor@email', 'vendor123', 'password123', 'vendor');
-INSERT INTO account VALUES (NULL, 'jane', 'vendor', 'janevendor@email', 'vendor456', 'password123', 'vendor');
-INSERT INTO account VALUES (NULL, 'joe', 'vendor', 'joevendor@email', 'vendor789', 'password123', 'vendor');
+INSERT INTO account VALUES (NULL, 'john', 'doe', 'jdoe@email', 'admin123', 'password123', 'admin', now());
+INSERT INTO account VALUES (NULL, 'jane', 'doe', 'janedoe@email', 'admin456', 'password123', 'admin', now());
 
-INSERT INTO account VALUES (NULL, 'john', 'customer', 'jcustomer@email', 'customer123', 'password123', 'customer');
-INSERT INTO account VALUES (NULL, 'jane', 'customer', 'janecustomer@email', 'customer456', 'password123', 'customer');
-INSERT INTO account VALUES (NULL, 'joe', 'customer', 'joecustomer@email', 'customer789', 'password123', 'customer');
-INSERT INTO account VALUES (NULL, 'alice', 'customer', 'alicecustomer@email', 'customer246', 'password123', 'customer');
-INSERT INTO account VALUES (NULL, 'tom', 'customer', 'tomcustomer@email', 'customer135', 'password123', 'customer');
+INSERT INTO account VALUES (NULL, 'john', 'vendor', 'jvendor@email', 'vendor123', 'password123', 'vendor', now());
+INSERT INTO account VALUES (NULL, 'jane', 'vendor', 'janevendor@email', 'vendor456', 'password123', 'vendor', now());
+INSERT INTO account VALUES (NULL, 'joe', 'vendor', 'joevendor@email', 'vendor789', 'password123', 'vendor', now());
+
+INSERT INTO account VALUES (NULL, 'john', 'customer', 'jcustomer@email', 'customer123', 'password123', 'customer', now());
+INSERT INTO account VALUES (NULL, 'jane', 'customer', 'janecustomer@email', 'customer456', 'password123', 'customer', now());
+INSERT INTO account VALUES (NULL, 'joe', 'customer', 'joecustomer@email', 'customer789', 'password123', 'customer', now());
+INSERT INTO account VALUES (NULL, 'alice', 'customer', 'alicecustomer@email', 'customer246', 'password123', 'customer', now());
+INSERT INTO account VALUES (NULL, 'tom', 'customer', 'tomcustomer@email', 'customer135', 'password123', 'customer', now());
 
 
 

@@ -10,6 +10,7 @@ CREATE TABLE account (
   username varchar(50),
   password varchar(100),
   role ENUM ('customer', 'vendor', 'admin'),
+  created_at datetime DEFAULT now(),
   UNIQUE KEY (account_id, role)
 );
 
@@ -68,7 +69,7 @@ CREATE TABLE orders (
     order_id int auto_increment PRIMARY KEY,
     customer_id int,
     customer_role ENUM('customer', 'vendor', 'admin') DEFAULT 'customer' NOT NULL,
-    order_date timestamp DEFAULT (now()),
+    order_date timestamp DEFAULT now(),
     total_items int DEFAULT 0,
     total_amount float,
     order_confirmed bool DEFAULT false,
@@ -126,7 +127,7 @@ CREATE TABLE participant (
   conversation_id int,
   account_id int,
   username varchar(50),
-  PRIMARY KEY (conversation_id, account_id), -- Prevents same user joining twice
+  PRIMARY KEY (conversation_id, account_id),
   FOREIGN KEY (conversation_id) REFERENCES conversation (conversation_id),
   FOREIGN KEY (account_id) REFERENCES account (account_id)
 );
@@ -137,7 +138,7 @@ CREATE TABLE message (
   sender_id int,
   message_content text,
   message_image text DEFAULT NULL,
-  sent_at timestamp DEFAULT (now()),
+  sent_at timestamp DEFAULT now(),
   is_read boolean DEFAULT false,
   FOREIGN KEY (conversation_id) REFERENCES conversation (conversation_id),
   FOREIGN KEY (sender_id) REFERENCES account (account_id)
