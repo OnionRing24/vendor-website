@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block body %}
+    {% if error %}
+        <h2>{{ error }}</h2>
+    {% endif %}
+    <div class="flex-box">
+        <h2>Login Form</h2>
+        <!-- The action must point to your /login route and use method="POST" -->
+        <form action="{{ url_for('login') }}" method="POST">
+            <div>
+                <label for="username">Username:</label>
+                <!-- name="username" matches request.form['username'] -->
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div>
+                <label for="password">Password:</label>
+                <!-- name="password" matches request.form['password'] -->
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>Edit Account</h1>
+
+    <form action="/settings" method="POST">
+        <input type="text" name="first_name" placeholder="{{ session['first_name'] }}" class="input_field" required>
+        <input type="text" name="last_name" placeholder="{{ session['last_name'] }}" class="input_field" required>
+        <br>
+        <input type="email" name="email" placeholder="{{ session['email'] }}" class="input_field" required>
+        <br>
+        <input type="text" name="username" placeholder="{{ session['username'] }}" class="input_field" required>
+        <br>
+        <input type="password" name="password" placeholder="New Password" class="input_field" required>
+        <input type="password" name="confirm_password" placeholder="Confirm Password" class="input_field" required>
+        <br>
+        <br>
+        <button type="submit">Register</button>
+    </form>

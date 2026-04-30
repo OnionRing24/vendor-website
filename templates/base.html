@@ -9,9 +9,31 @@
             <ul>
                 <li><a href="/">Home</a></li>
                 <li><a href="/register">Register</a></li>
-                <li><a href="/login">Login</a></li>
+                {% if session['username'] %}
                 <li><a href="/logout">Log Out</a></li>
+                {% else %}
+                    <li><a href="/login">Login</a></li>
+                {% endif %}
             </ul>
+
+            {% if session['username'] %}
+                <ul>
+                    {% if session['role']=='vendor' %}
+                        <li><a href='/vendor'>Vendor Dashboard</a></li>
+                        <li><a href='#'>Products</a></li>
+                        <li><a href='#'>Orders</a></li>
+                    {% endif %}
+
+                    {% if session['role']=='customer' %}
+                        <li><a href='#'>Dashboard</a></li>
+                        <li><a href='#'>Browse</a></li>
+                        <li><a href='#'>Orders</a></li>
+                        <li><a href='#'>Claims</a></li>
+                        <li><a href='#'>Cart</a></li>
+                    {% endif %}
+                    <li><a href='#'>Settings</a></li>
+                </ul>
+            {% endif %}
         </header>
         
         <body>

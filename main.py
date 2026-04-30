@@ -179,6 +179,30 @@ def register():
         return render_template('register.html', error=None, success="Registration successful! Pending admin approval.")
     return render_template('register.html')
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = Account.query.filter_by(username=username, password=password).first()
+        if user:
+            if not user.approved:
+                return render_template('login.html', error='Account is pending approval.')
+
+            session['first_name'] = user.first_name
+            session['last_name'] = user.last_name
+            session['user_id'] = user.id
+            session['username'] = user.username
+            session['email'] = user.email
+            session['role'] = user.role
+            return redirect('/')
+    return render_template('true_login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/login')
+
 
 
 
