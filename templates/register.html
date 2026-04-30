@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block body %}
+    {% if error %}
+        <h2>{{ error }}</h2>
+    {% endif %}
+
+    {% if success %}
+        <h2>{{ success }}</h2>
+    {% endif %}
+    <h1>Create an Account</h1>
+    
+    <form action="/register" method="POST">
+        <select name="role" class="role" required>
+            <option value="" disabled selected>Role</option>
+            <option value="customer">Customer</option>
+            <option value="Vendor">Vendor</option>
+        </select>
+        <br>
+        <input type="text" name="first_name" placeholder="First Name" class="input_field" required>
+        <input type="text" name="last_name" placeholder="Last Name" class="input_field" required>
+        <br>
+        <input type="email" name="email" placeholder="Email" class="input_field" required>
+        <br>
+        <input type="text" name="username" placeholder="Username" class="input_field" required>
+        <br>
+        <input type="password" name="password" placeholder="Password" class="input_field" required>
+        <input type="password" name="confirm_password" placeholder="Confirm Password" class="input_field" required>
+        <br>
+        <label for="agree">
+            <input type="checkbox" id="agree" name="agree" required>
+            I agree to the Terms and Conditions
+        </label>
+        <br>
+        <button type="submit">Register</button>
+    </form>
+{% endblock %}
