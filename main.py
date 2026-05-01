@@ -231,13 +231,22 @@ def edit_account():
         db.session.commit()
         return render_template('settings.html', error=None, success='Changes Saved')
     return render_template('settings.html')
-        
-
 
 
 @app.route('/vendor')
 def vendor_dashboard():
     return render_template('vendor.html')
+
+@app.route('/products')
+@app.route('/products/<page>')
+def my_products(page=1):
+    page = int(page)
+    per_page = 10
+    paginated = db.session.query(Product).paginate(page=page, per_page=per_page, error_out=False)
+    products = paginated.items
+
+    print(products)
+    return render_template('products.html', products=products, page=page, per_page=per_page)
 
 
 
