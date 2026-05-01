@@ -51,10 +51,9 @@ class Account(db.Model):
 class Product(db.Model):
     product_id = db.Column(db.Integer, primary_key=True)
     vendor_id = db.Column(db.Integer, db.ForeignKey('account.account_id'), nullable=False)
-    name = db.Column(db.String(255))
+    name = db.Column(db.String(255), unique=True)
     description = db.Column(db.Text)
-    available = db.Column(db.Integer, default=0)
-    rating = db.Column(db.Integer, nullable=False)
+    rating = db.Column(db.Integer, nullable=False, default = 0)
     price = db.Column(db.Float)
     original_price = db.Column(db.Float)
     is_discount = db.Column(db.Boolean, default=False)
@@ -72,6 +71,7 @@ class ProductVariant(db.Model):
     color_name = db.Column(db.String(50))
     product_width = db.Column(db.String(50))
     product_height = db.Column(db.String(50))
+    available = db.Column(db.Integer, nullable=False, default=0)
 
 class ProductImage(db.Model):
     product_image_id = db.Column(db.Integer, primary_key=True)
@@ -152,7 +152,8 @@ class Message(db.Model):
     sent_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_read = db.Column(db.Boolean, default=False)
 
-
+with app.app_context():
+    db.create_all()
 
 @app.route('/')
 def index():
@@ -255,13 +256,24 @@ def add_product():
             vendor_id=session['user_id'],
             name=request.form['name'],
             description=request.form['description'],
-            available=request.form['available'],
-            price=request.form['price'],
-            rating=0
+            price=request.form['price']
         )
         db.session.add(new_product)
         db.session.commit()
-        return render_template('products.html')
+
+        product = Product.query.filter_by(vendor_id=session['user_id'], name=request.form['name']).first()
+
+        new_variant = ProductVariant(
+            product_id=product.product_id,
+            color_code=f"{request.form['color_code']}",
+            color_name=request.form['color_name'],
+            product_width=f"{request.form['product_width']}{request.form['unit_width']}",
+            product_height=f"{request.form['product_height']}{request.form['unit_height']}",
+            available=request.form['available']
+        )
+        db.session.add(new_variant)
+        db.session.commit()
+        return render_template('/products')
     return render_template('add_product.html')
 
 

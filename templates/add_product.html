@@ -7,7 +7,33 @@
         <input type="text" name="name" placeholder="Product Name" class="input_field" required>
         <input type="text" name="description" placeholder="Description" class="input_field" required>
         <input type="input" step="0.01" min="0.01" name="price" placeholder="price" class="input_field" required>
-        <input type="number" name="available" placeholder="Amount Available" class="input_field" required>
+        <br>
+        <br>
+        <input type="color" name="color_code" value="#ff0000" requred>
+        <input type="text" name="color_name" placeholder="Color Name" required>
+        <input type="number" name="available" placeholder="Amount Available" required>
+        <br>
+        <br>
+        <input type="number" name="product_width" placeholder="Width" required>
+        <select name="unit_width" class="unit" required>
+            <option value="" disabled selected>Unit</option>
+            <option value="in">Inches</option>
+            <option value="ft">Feet</option>
+            <option value="mm">Milimeters</option>
+            <option value="cm">Centimeters</option>
+            <option value="m">Meters</option>
+        </select>
+        <br>
+        <input type="number" name="product_height" placeholder="Height" required>
+        <select name="unit_height" class="unit" required>
+            <option value="" disabled selected>Unit</option>
+            <option value="in">Inches</option>
+            <option value="ft">Feet</option>
+            <option value="mm">Milimeters</option>
+            <option value="cm">Centimeters</option>
+            <option value="m">Meters</option>
+        </select>
+        <br>
         <button type="submit">Add Product</button>
     </form>
 
