@@ -1,3 +1,4 @@
+CREATE DATABASE IF NOT EXISTS storedb;
 use storedb;
 
 -- 1. CLEAR PREVIOUS ATTEMPTS (Optional, but recommended for a clean slate)
