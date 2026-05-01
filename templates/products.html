@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block body %}
+
     {% set prev_page = page - 1 %}
     <div class="column">
         <h3>Page {{ page }}</h3>
@@ -9,7 +10,11 @@
             <div class="product">
                 <ul>
                     <li><h1>{{product.name}}</h1></li>
+                    <li><h2>{{product.price}}</h2></li>
                 </ul>
             </div>
+            {% endfor %}
         </div>
     </div>
+
+{% endblock %}

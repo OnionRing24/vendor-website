@@ -248,6 +248,22 @@ def my_products(page=1):
     print(products)
     return render_template('products.html', products=products, page=page, per_page=per_page)
 
+@app.route('/add_product', methods=['GET', 'POST'])
+def add_product():
+    if request.method == 'POST':
+        new_product = Product(
+            vendor_id=session['user_id'],
+            name=request.form['name'],
+            description=request.form['description'],
+            available=request.form['available'],
+            price=request.form['price'],
+            rating=0
+        )
+        db.session.add(new_product)
+        db.session.commit()
+        return render_template('products.html')
+    return render_template('add_product.html')
+
 
 
 
