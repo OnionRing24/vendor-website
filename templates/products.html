@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block body %}
+    {% set prev_page = page - 1 %}
+    <div class="column">
+        <h3>Page {{ page }}</h3>
+
+        <div class="flex-box">
+            {% for product in products %}
+            <div class="product">
+                <ul>
+                    <li><h1>{{product.name}}</h1></li>
+                </ul>
+            </div>
+        </div>
+    </div>
