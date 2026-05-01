@@ -183,9 +183,9 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
-        user = Account.query.filter_by(username=username, password_hash=password).first()
+        user = Account.query.filter_by(email=email, password_hash=password).first()
         if user:
 
             session['first_name'] = user.first_name
@@ -193,7 +193,8 @@ def login():
             session['user_id'] = user.account_id
             session['username'] = user.username
             session['email'] = user.email
-            session['role'] = user.role
+            session['role'] = user.role.name
+            session['password'] = user.password_hash
             return redirect('/')
     return render_template('true_login.html')
 
@@ -201,6 +202,42 @@ def login():
 def logout():
     session.clear()
     return redirect('/login')
+
+@app.route('/settings', methods=['GET', 'POST'])
+def edit_account():
+    if request.method == 'POST':
+        user = Account.query.filter_by(email=session['email'], password_hash=session['password']).first()
+
+        if request.form['first_name']:
+            user.first_name = request.form['first_name']
+            session['first_name'] = user.first_name
+        if request.form['last_name']:
+            user.last_name = request.form['last_name']
+            session['last_name'] = user.last_name
+        if request.form['email']:
+            user.email = request.form['email']
+            session['email'] = user.email
+        if request.form['username']:
+            user.username = request.form['username']
+            session['username'] = user.username
+        if request.form['password']:
+            check_password=request.form.get('password')
+            confirm_password=request.form.get('confirm_password')
+            if check_password != confirm_password:
+                return render_template('register.html', error='Passwords do not match', success=None)
+            user.password_hash = request.form['password']
+            session['password'] = user.password_hash
+        
+        db.session.commit()
+        return render_template('settings.html', error=None, success='Changes Saved')
+    return render_template('settings.html')
+        
+
+
+
+@app.route('/vendor')
+def vendor_dashboard():
+    return render_template('vendor.html')
 
 
 

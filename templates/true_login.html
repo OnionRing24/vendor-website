@@ -8,9 +8,9 @@
         <!-- The action must point to your /login route and use method="POST" -->
         <form action="{{ url_for('login') }}" method="POST">
             <div>
-                <label for="username">Username:</label>
+                <label for="email">Email:</label>
                 <!-- name="username" matches request.form['username'] -->
-                <input type="text" id="username" name="username" required>
+                <input type="text" id="email" name="email" required>
             </div>
             <div>
                 <label for="password">Password:</label>
