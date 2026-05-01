@@ -196,7 +196,7 @@ def login():
             session['role'] = user.role.name
             session['password'] = user.password_hash
             return redirect('/')
-    return render_template('true_login.html')
+    return render_template('login.html')
 
 @app.route('/logout')
 def logout():

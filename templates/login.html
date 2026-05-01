@@ -315,50 +315,30 @@
       <h1 class="form-title">Sign In</h1>
       <p class="form-sub">Good to have you back.</p>
 
-      <div class="field">
-        <label for="email">Email address</label>
-        <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" />
-      </div>
-
-      <div class="field">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" />
-        <div class="field-footer">
-          <a class="forgot" href="#">Forgot password?</a>
+      <form action="{{ url_for('login') }}" method="POST">
+        <div class="field">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required />
         </div>
-      </div>
 
-      <!-- TODO: Connect to database/backend authentication here -->
-      <button class="login-btn" onclick="handleLogin()">Enter the store</button>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required />
+          <div class="field-footer">
+            <a class="forgot" href="#">Forgot password?</a>
+          </div>
+        </div>
+
+        <button class="login-btn" type="submit">Enter the store</button>
+      </form>
 
       <div class="divider"><span>or</span></div>
 
       <p class="register-link">
-        New here? <a href="#">Create an account</a>
+        New here? <a href="/register">Create an account</a>
       </p>
     </div>
   </div>
-
-  <script>
-    function handleLogin() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-
-      // TODO: Replace with actual backend/database authentication      //
-      // fetch('/api/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, password })
-      // })
-      // .then(res => res.json())
-      // .then(data => {
-      //   if (data.success) window.location.href = '/store';
-      //   else showError(data.message);
-      // });
-
-      console.log('Login attempted for:', email);
-    }
-  </script>
 
 </body>
 </html>
