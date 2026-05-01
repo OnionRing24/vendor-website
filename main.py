@@ -6,6 +6,7 @@ import enum
 
 app = Flask(__name__)
 # Replace with your actual credentials
+app.config['SECRET_KEY'] = 'dev'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:cset155@localhost/storedb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -171,12 +172,12 @@ def register():
             last_name=request.form['last_name'],
             email=request.form['email'],
             username=request.form['username'],
-            password=request.form['password'],
+            password_hash=request.form['password'],
             role=request.form['role']
         )
         db.session.add(new_user)
         db.session.commit()
-        return render_template('register.html', error=None, success="Registration successful! Pending admin approval.")
+        return render_template('register.html', error=None, success="Account Created!")
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -184,14 +185,12 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        user = Account.query.filter_by(username=username, password=password).first()
+        user = Account.query.filter_by(username=username, password_hash=password).first()
         if user:
-            if not user.approved:
-                return render_template('login.html', error='Account is pending approval.')
 
             session['first_name'] = user.first_name
             session['last_name'] = user.last_name
-            session['user_id'] = user.id
+            session['user_id'] = user.account_id
             session['username'] = user.username
             session['email'] = user.email
             session['role'] = user.role
