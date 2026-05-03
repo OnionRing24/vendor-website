@@ -13,6 +13,10 @@
                     <li><h2>{{product.price}}</h2></li>
                     <li><p>{{product.vendor.username}}</p></li>
                 </ul>
+                <div class="test-actions">
+                    <a href="/edit_product/{{ product['product_id'] }}" class="test-action-btn">Edit Product</a>
+                    <a href="#" class="test-action-btn">Remove Product</a>
+                </div>
             </div>
             <br>
             {% endfor %}

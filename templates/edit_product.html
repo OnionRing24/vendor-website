@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block body %}
+
+    <h1>Update Product</h1>
+
+    <form action="/edit_product" method="POST">
+        <input type="text" name="name" value="{{product.name}}" class="input_field" required>
+        <input type="text" name="description" value="{{product.description}}" class="input_field" required>
+        <input type="input" step="0.01" min="0.01" name="price" value="{{product.price}}" class="input_field" required>
+        <br>
+        {% if variants %}
+            {% for variant in variants %}
+                <br>
+                <input type="color" name="color_code" value="#ff0000" requred>
+                <input type="text" name="color_name" placeholder="Color Name" required>
+                <input type="number" name="available" placeholder="Amount Available" required>
+                <br>
+                <br>
+                <input type="number" name="product_width" placeholder="Width" required>
+                <select name="unit_width" class="unit" required>
+                    <option value="" disabled selected>Unit</option>
+                    <option value="in">Inches</option>
+                    <option value="ft">Feet</option>
+                    <option value="mm">Milimeters</option>
+                    <option value="cm">Centimeters</option>
+                    <option value="m">Meters</option>
+                </select>
+                <br>
+                <input type="number" name="product_height" placeholder="Height" required>
+                <select name="unit_height" class="unit" required>
+                    <option value="" disabled selected>Unit</option>
+                    <option value="in">Inches</option>
+                    <option value="ft">Feet</option>
+                    <option value="mm">Milimeters</option>
+                    <option value="cm">Centimeters</option>
+                    <option value="m">Meters</option>
+                </select>
+                <br>
+            {% endfor %}
+        {% endif %}
+        <br>
+
+        <div class="input-container">
+            <input type="input" step="0.01" min="0.01" name="discount" placeholder="New Price">
+            <input type="date" name="discount_start">
+            <input type="date" name="discount_end">
+        </div>
+        <button type="button">Add Discount</button>
+
+        <br>
+        <br>
+        
+        <button type="submit">Save Changes</button>
+    </form>
+
+{% endblock %}

@@ -61,6 +61,7 @@ class Product(db.Model):
     discount_end = db.Column(db.DateTime)
     warranty_period = db.Column(db.DateTime)
     visibility = db.Column(db.Enum(VisibilityEnum), default=VisibilityEnum.public)
+    vendor = db.relationship('Account', backref='vendor', lazy=True)
     
     __table_args__ = (CheckConstraint('discount_end > discount_start', name='discount_date_check'),)
 
@@ -91,6 +92,7 @@ class CartItem(db.Model):
     quantity = db.Column(db.Integer, default=1)
     price_at_addition = db.Column(db.Float)
     visibility = db.Column(db.Enum(VisibilityEnum), nullable=False)
+    product = db.relationship('Product', backref='product', lazy=True)
 
 class Order(db.Model):
     __tablename__ = 'orders'
@@ -225,7 +227,7 @@ def edit_account():
             check_password=request.form.get('password')
             confirm_password=request.form.get('confirm_password')
             if check_password != confirm_password:
-                return render_template('register.html', error='Passwords do not match', success=None)
+                return render_template('settings.html', error='Passwords do not match', success=None)
             user.password_hash = request.form['password']
             session['password'] = user.password_hash
         
@@ -240,7 +242,7 @@ def vendor_dashboard():
 
 @app.route('/products')
 @app.route('/products/<page>')
-def my_products(page=1):
+def get_products(page=1):
     page = int(page)
     per_page = 10
     paginated = db.session.query(Product).paginate(page=page, per_page=per_page, error_out=False)
@@ -273,8 +275,37 @@ def add_product():
         )
         db.session.add(new_variant)
         db.session.commit()
-        return render_template('/products')
+        return redirect('/products')
     return render_template('add_product.html')
+
+@app.route('/manage_product')
+@app.route('/manage_product/<page>')
+def my_products(page=1):
+    account_id = session.get('user_id')
+    page = int(page)
+    if not account_id:
+        return redirect('/login')
+    
+    per_page = 10
+    paginated = db.session.query(Product).filter_by(vendor_id=account_id).paginate(page=page, per_page=per_page, error_out=False)
+    products = paginated.items
+
+    print(products)
+    return render_template('manage_product.html', products=products, page=page, per_page=per_page)
+
+@app.route('/edit_product')
+@app.route('/edit_product/<int:product_id>', methods=['GET'])
+def update_get_request(product_id):
+    try:
+        product = Product.query.filter_by(product_id=product_id).first()
+        
+        variants = ProductVariant.query.filter_by(product_id=product_id).all()
+
+        return render_template('edit_product.html', product=product, variants=variants, error=None)
+    except Exception as e:
+        print(e)
+        return render_template('edit_product.html', error=str(e), product=None, variants=[])
+
 
 
 
