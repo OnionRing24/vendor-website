@@ -12,8 +12,68 @@
                     <li><h1>{{product.name}}</h1></li>
                     <li><h2>{{product.price}}</h2></li>
                     <li><p>{{product.vendor.username}}</p></li>
+
+                    <li>
+                        {% if product.rating >= 0 %}
+                            Not Yet Reviewed
+
+                        {% else %}
+                            <ion-icon
+                                {% if product.rating >= 1 %}
+                                name="star"
+                                {% elif 0 <= product.rating <= 1 %}
+                                name="star-half-outline"
+                                {% else %}
+                                name="star-outline"
+                                {% endif %}>
+                            </ion-icon>
+
+                            <ion-icon
+                                {% if product.rating >= 2 %}
+                                name="star"
+                                {% elif 1 <= product.rating <= 2 %}
+                                name="star-half-outline"
+                                {% else %}
+                                name="star-outline"
+                                {% endif %}>
+                            </ion-icon>
+
+                            <ion-icon
+                                {% if product.rating >= 3 %}
+                                name="star"
+                                {% elif 2 <= product.rating <= 3 %}
+                                name="star-half-outline"
+                                {% else %}
+                                name="star-outline"
+                                {% endif %}>
+                            </ion-icon>
+
+                            <ion-icon
+                                {% if product.rating >= 4 %}
+                                name="star"
+                                {% elif 3 <= product.rating <= 4 %}
+                                name="star-half-outline"
+                                {% else %}
+                                name="star-outline"
+                                {% endif %}>
+                            </ion-icon>
+
+                            <ion-icon
+                                {% if product.rating >= 5 %}
+                                name="star"
+                                {% elif 4 <= product.rating <= 5 %}
+                                name="star-half-outline"
+                                {% else %}
+                                name="star-outline"
+                                {% endif %}>
+                            </ion-icon>
+                            <p>{{ product.rating }}</p>
+                        {% endif %}
+                    </li>
+
                     <li>{{product.visibility.name}}</li>
                 </ul>
+                
                 <div class="test-actions">
                     <a href="/edit_product/{{ product['product_id'] }}" class="test-action-btn">Edit Product</a>
                     <a href="#" class="test-action-btn">Remove Product</a>

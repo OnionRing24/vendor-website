@@ -53,7 +53,7 @@ class Product(db.Model):
     vendor_id = db.Column(db.Integer, db.ForeignKey('account.account_id'), nullable=False)
     name = db.Column(db.String(255), unique=True)
     description = db.Column(db.Text)
-    rating = db.Column(db.Integer, nullable=False, default = 0)
+    rating = db.Column(db.Float, nullable=False, default = 0)
     price = db.Column(db.Float)
     original_price = db.Column(db.Float)
     is_discount = db.Column(db.Boolean, default=False)
@@ -204,6 +204,8 @@ def login():
             session['email'] = user.email
             session['role'] = user.role.name
             session['password'] = user.password_hash
+            if session['role'] == 'vendor':
+                return redirect('/vendor')
             return redirect('/')
     return render_template('login.html')
 
@@ -358,6 +360,13 @@ def edit_product(product_id):
     # GET Request Logic
     variants = ProductVariant.query.filter_by(product_id=product_id).all()
     return render_template('edit_product.html', product=product, variants=variants)
+
+@app.route('/view_product/<int:product_id>')
+def view_product(product_id):
+    product = Product.query.get_or_404(product_id)
+    variants = ProductVariant.query.filter_by(product_id=product_id).all()
+    reviews = Review.query.filter_by(product_id=product_id).all()
+    return render_template('view_product.html', product=product, variants=variants, reviews=reviews)
 
 
 
