@@ -1,21 +1,100 @@
 {% extends "base.html" %}
 {% block body %}
 
+    {% if error %}
+        <h2>{{ error }}</h2>
+    {% endif %}
+
+    {% if success %}
+        <h2>{{ success }}</h2>
+    {% endif %}
+
     <h1>Update Product</h1>
 
-    <form action="/edit_product" method="POST">
+    <form action="/edit_product/{{ product.product_id }}" method="POST">
         <input type="text" name="name" value="{{product.name}}" class="input_field" required>
         <input type="text" name="description" value="{{product.description}}" class="input_field" required>
         <input type="input" step="0.01" min="0.01" name="price" value="{{product.price}}" class="input_field" required>
         <br>
-        {% if variants %}
-            {% for variant in variants %}
+
+<!--
+        <div class="input-container">
+            <input type="input" step="0.01" min="0.01" name="discount" placeholder="New Price">
+            <input type="date" name="discount_start">
+            <input type="date" name="discount_end">
+            <button type="button">Remove</button>
+        </div>
+        <br>
+        <button type="button">Add Discount</button>
+
+        <br>
+-->
+
+        <div id="input-container">
+            {% if variants %}
+                {% for variant in variants %}
+                    <div class="input_group">
+                        <br>
+                        <input type="color" name="color_code" value="{{variant.color_code}}" requred>
+                        <input type="text" name="color_name" value="{{variant.color_name}}" required>
+                        <input type="number" name="available" value="{{variant.available}}" placeholder="Amount Available" required>
+                        <br>
+                        <br>
+                        <input type="number" name="product_width" value="{{variant.product_width}}" required>
+                        <select name="unit_width" class="unit" required>
+                            <option value="in" {% if variant.unit_width == 'in' %}selected{% endif %}>Inches</option>
+                            <option value="ft" {% if variant.unit_width == 'ft' %}selected{% endif %}>Feet</option>
+                            <option value="mm" {% if variant.unit_width == 'mm' %}selected{% endif %}>Millimeters</option>
+                            <option value="cm" {% if variant.unit_width == 'cm' %}selected{% endif %}>Centimeters</option>
+                            <option value="m" {% if variant.unit_width == 'm' %}selected{% endif %}>Meters</option>
+                        </select>
+                        <br>
+                        <input type="number" name="product_height" value="{{variant.product_height}}" required>
+                        <select name="unit_height" class="unit" required>
+                            <option value="in" {% if variant.unit_height == 'in' %}selected{% endif %}>Inches</option>
+                            <option value="ft" {% if variant.unit_height == 'ft' %}selected{% endif %}>Feet</option>
+                            <option value="mm" {% if variant.unit_height == 'mm' %}selected{% endif %}>Millimeters</option>
+                            <option value="cm" {% if variant.unit_height == 'cm' %}selected{% endif %}>Centimeters</option>
+                            <option value="m" {% if variant.unit_height == 'm' %}selected{% endif %}>Meters</option>
+                        </select>
+                        <br>
+                        {% if not loop.first %}
+                            <button type="button" onclick="deleteVariant('{{ variant.variant_id }}')">Remove</button>
+                        {% endif %}
+                        <br>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <br>
+        <button type="button" onclick="addVariant()">Add Variant</button>
+        <br>
+        
+        <br>
+        <select name="visibility" class="visibility" required>
+            <option value="" disabled {% if not product.visibility %}selected{% endif %}>Visibility</option>
+            <option value="public" {% if product.visibility|string == 'public' %}selected{% endif %}>Public</option>
+            <option value="unlisted" {% if product.visibility|string == 'unlisted' %}selected{% endif %}>Unlisted</option>
+            <option value="private" {% if product.visibility|string == 'private' %}selected{% endif %}>Private</option>
+        </select>
+        <br>
+        
+        <button type="submit">Save Changes</button>
+    </form>
+
+    <script>
+        function addVariant() {
+            const container = document.getElementById('input-container');
+            const div = document.createElement('div');
+            div.className = 'input_group';
+        
+            // We use innerHTML to define the complex structure of the variant fields
+            div.innerHTML = `
                 <br>
-                <input type="color" name="color_code" value="#ff0000" requred>
+                <input type="color" name="color_code" value="#ff0000" required>
                 <input type="text" name="color_name" placeholder="Color Name" required>
                 <input type="number" name="available" placeholder="Amount Available" required>
-                <br>
-                <br>
+                <br><br>
                 <input type="number" name="product_width" placeholder="Width" required>
                 <select name="unit_width" class="unit" required>
                     <option value="" disabled selected>Unit</option>
@@ -36,21 +115,33 @@
                     <option value="m">Meters</option>
                 </select>
                 <br>
-            {% endfor %}
-        {% endif %}
-        <br>
+            `;
+            
+            // Add the Remove button
+            const removeButton = document.createElement('button');
+            removeButton.type = 'button';
+            removeButton.textContent = 'Remove';
+            removeButton.onclick = function() {
+                this.parentElement.remove();
+            };
 
-        <div class="input-container">
-            <input type="input" step="0.01" min="0.01" name="discount" placeholder="New Price">
-            <input type="date" name="discount_start">
-            <input type="date" name="discount_end">
-        </div>
-        <button type="button">Add Discount</button>
+            div.appendChild(removeButton);
+            div.appendChild(document.createElement('br'));
 
-        <br>
-        <br>
-        
-        <button type="submit">Save Changes</button>
-    </form>
+            container.appendChild(div);
+        }
 
+        // Updated to match your "deleteVariant" logic
+        function deleteVariant(variantId) {
+            if (confirm('Are you sure you want to delete this variant?')) {
+                fetch(`/delete_variant/${variantId}`, { method: 'DELETE' })
+                    .then(response => {
+                        if(response.ok) {
+                            location.reload();
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+        }
+    </script>
 {% endblock %}

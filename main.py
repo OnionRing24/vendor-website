@@ -60,7 +60,7 @@ class Product(db.Model):
     discount_start = db.Column(db.DateTime)
     discount_end = db.Column(db.DateTime)
     warranty_period = db.Column(db.DateTime)
-    visibility = db.Column(db.Enum(VisibilityEnum), default=VisibilityEnum.public)
+    visibility = db.Column(db.Enum(VisibilityEnum), default=VisibilityEnum.private)
     vendor = db.relationship('Account', backref='vendor', lazy=True)
     
     __table_args__ = (CheckConstraint('discount_end > discount_start', name='discount_date_check'),)
@@ -70,8 +70,14 @@ class ProductVariant(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
     color_code = db.Column(db.String(50))
     color_name = db.Column(db.String(50))
-    product_width = db.Column(db.String(50))
-    product_height = db.Column(db.String(50))
+    
+    # Separated columns
+    product_width = db.Column(db.Float)  # Changed to Float for precision
+    unit_width = db.Column(db.String(10)) 
+    
+    product_height = db.Column(db.Float)
+    unit_height = db.Column(db.String(10))
+    
     available = db.Column(db.Integer, nullable=False, default=0)
 
 class ProductImage(db.Model):
@@ -269,8 +275,10 @@ def add_product():
             product_id=product.product_id,
             color_code=f"{request.form['color_code']}",
             color_name=request.form['color_name'],
-            product_width=f"{request.form['product_width']}{request.form['unit_width']}",
-            product_height=f"{request.form['product_height']}{request.form['unit_height']}",
+            product_width=request.form['product_width'],
+            unit_width=request.form['unit_width'],
+            product_height=request.form['product_height'],
+            unit_height=request.form['unit_height'],
             available=request.form['available']
         )
         db.session.add(new_variant)
@@ -293,18 +301,63 @@ def my_products(page=1):
     print(products)
     return render_template('manage_product.html', products=products, page=page, per_page=per_page)
 
-@app.route('/edit_product')
-@app.route('/edit_product/<int:product_id>', methods=['GET'])
-def update_get_request(product_id):
-    try:
-        product = Product.query.filter_by(product_id=product_id).first()
-        
-        variants = ProductVariant.query.filter_by(product_id=product_id).all()
+@app.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
+def edit_product(product_id):
+    product = Product.query.get_or_404(product_id)
 
-        return render_template('edit_product.html', product=product, variants=variants, error=None)
-    except Exception as e:
-        print(e)
-        return render_template('edit_product.html', error=str(e), product=None, variants=[])
+    if product.vendor_id != session['user_id']:
+        redirect('/')
+    
+    if request.method == 'POST':
+        try:
+            # 1. Update Main Product Details
+            product.name = request.form.get('name')
+            product.description = request.form.get('description')
+            product.price = float(request.form.get('price'))
+            product.visibility = request.form.get('visibility')
+            
+            # 2. Handle Variants
+            # We get lists for every field
+            color_codes = request.form.getlist('color_code')
+            color_names = request.form.getlist('color_name')
+            availables = request.form.getlist('available')
+            widths = request.form.getlist('product_width')
+            unit_widths = request.form.getlist('unit_width')
+            heights = request.form.getlist('product_height')
+            unit_heights = request.form.getlist('unit_height')
+
+            # Delete existing variants associated with this product
+            ProductVariant.query.filter_by(product_id=product_id).delete()
+
+            # Re-add variants from the form data
+            for i in range(len(color_codes)):
+                new_variant = ProductVariant(
+                    product_id=product.product_id,
+                    color_code=color_codes[i],
+                    color_name=color_names[i],
+                    available=int(availables[i]),
+                    product_width=float(widths[i]),
+                    unit_width=unit_widths[i],
+                    product_height=float(heights[i]),
+                    unit_height=unit_heights[i]
+                )
+                db.session.add(new_variant)
+
+            db.session.commit()
+            
+            # Refresh data for the template
+            variants = ProductVariant.query.filter_by(product_id=product_id).all()
+            return render_template('edit_product.html', product=product, variants=variants, success="Product updated successfully!")
+
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error: {e}")
+            variants = ProductVariant.query.filter_by(product_id=product_id).all()
+            return render_template('edit_product.html', product=product, variants=variants, error=f"Update failed: {str(e)}")
+
+    # GET Request Logic
+    variants = ProductVariant.query.filter_by(product_id=product_id).all()
+    return render_template('edit_product.html', product=product, variants=variants)
 
 
 
