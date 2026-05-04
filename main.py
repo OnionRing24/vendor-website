@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import event, CheckConstraint
 from datetime import datetime, timedelta
+from werkzeug.security import generate_password_hash, check_password_hash
 import enum
 
 app = Flask(__name__)
@@ -176,12 +177,14 @@ def register():
         if check_password != confirm_password:
             return render_template('register.html', error='Passwords do not match', success=None)
         
+        password_hash = generate_password_hash(request.form['password'])
+        
         new_user = Account(
             first_name=request.form['first_name'],
             last_name=request.form['last_name'],
             email=request.form['email'],
             username=request.form['username'],
-            password_hash=request.form['password'],
+            password_hash=password_hash,
             role=request.form['role']
         )
         db.session.add(new_user)
@@ -194,8 +197,8 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        user = Account.query.filter_by(email=email, password_hash=password).first()
-        if user:
+        user = Account.query.filter_by(email=email).first()
+        if user and check_password_hash(user.password_hash, password):
 
             session['first_name'] = user.first_name
             session['last_name'] = user.last_name
@@ -207,6 +210,8 @@ def login():
             if session['role'] == 'vendor':
                 return redirect('/vendor')
             return redirect('/')
+        else:
+            return render_template('login.html', error='Invalid email or password')
     return render_template('login.html')
 
 @app.route('/logout')
@@ -236,7 +241,7 @@ def edit_account():
             confirm_password=request.form.get('confirm_password')
             if check_password != confirm_password:
                 return render_template('settings.html', error='Passwords do not match', success=None)
-            user.password_hash = request.form['password']
+            user.password_hash = generate_password_hash(request.form['password'])
             session['password'] = user.password_hash
         
         db.session.commit()

@@ -1,36 +1,82 @@
 {% extends "base.html" %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/register.css') }}">
+{% endblock %}
 {% block body %}
+<div class="auth-layout">
+
+    <!-- LEFT PANEL (vinyl) -->
+    <div class="left-panel">
+        <div class="grain"></div>
+
+        <div class="record-wrap">
+            <svg class="record-svg" viewBox="0 0 340 340" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="170" cy="170" r="168" fill="#0d0c0a" stroke="#2a2720" stroke-width="1"/>
+                <circle cx="170" cy="170" r="68" fill="#c8431a"/>
+                <text x="170" y="160" text-anchor="middle"
+                      font-family="Bebas Neue" font-size="20" fill="#f2ead8">
+                    ZHIEND
+                </text>
+                <circle cx="170" cy="170" r="5" fill="#0d0c0a"/>
+            </svg>
+        </div>
+
+        <div class="brand-overlay">
+            <div class="brand-name">Zhiend</div>
+            <div class="brand-tagline">Instruments & Vinyls — Est. 2024</div>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL (your form unchanged structurally) -->
+    <div class="right-panel">
+        <div class="register-container">
+    <h1 class="form-title">Create an Account</h1>
     {% if error %}
-        <h2>{{ error }}</h2>
+        <h2 class="message error">{{ error }}</h2>
     {% endif %}
 
     {% if success %}
-        <h2>{{ success }}</h2>
+        <h2 class="message success">{{ success }}</h2>
     {% endif %}
-    <h1>Create an Account</h1>
     
-    <form action="/register" method="POST">
-        <select name="role" class="role" required>
+    <form action="/register" method="POST" class="register-form">
+       <div class = "field">
+        <label for="role">Role</label>
+        <select name="role" class="input_field" required>
             <option value="" disabled selected>Role</option>
             <option value="customer">Customer</option>
-            <option value="Vendor">Vendor</option>
+            <option value="vendor">Vendor</option>
         </select>
-        <br>
-        <input type="text" name="first_name" placeholder="First Name" class="input_field" required>
-        <input type="text" name="last_name" placeholder="Last Name" class="input_field" required>
-        <br>
-        <input type="email" name="email" placeholder="Email" class="input_field" required>
-        <br>
-        <input type="text" name="username" placeholder="Username" class="input_field" required>
-        <br>
-        <input type="password" name="password" placeholder="Password" class="input_field" required>
-        <input type="password" name="confirm_password" placeholder="Confirm Password" class="input_field" required>
-        <br>
-        <label for="agree">
-            <input type="checkbox" id="agree" name="agree" required>
-            I agree to the Terms and Conditions
-        </label>
-        <br>
+       </div>
+
+        <div class="field-row">
+         <input type="text" name="first_name" placeholder="First Name" class="input_field" required>
+         <input type="text" name="last_name" placeholder="Last Name" class="input_field" required>
+        </div>
+
+        <div class ="field">
+            <input type="email" name="email" placeholder="Email" class="input_field" required>
+        </div>
+
+        <div class="field">
+            <input type="text" name="username" placeholder="Username" class="input_field" required>
+        </div>
+
+        <div class="field">
+            <input type="password" name="password" placeholder="Password" class="input_field" required>
+        </div>
+
+        <div class="field">
+            <input type="password" name="confirm_password" placeholder="Confirm Password" class="input_field" required>
+        </div>
+
+        <div class="field checkbox-field">
+            <label for="agree">
+                <input type="checkbox" id="agree" name="agree" required>
+                I agree to the Terms and Conditions
+            </label>
+        </div>
+    
         <button type="submit">Register</button>
     </form> 
 {% endblock %}

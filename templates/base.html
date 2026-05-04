@@ -2,6 +2,8 @@
     <head>
         <meta charset="utf-8">
         <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/header.css') }}">
+        {% block styles %}{% endblock %}
+        {% block head %}{% endblock %}
         <title>Test Run</title>
     </head>
     <body>
@@ -35,11 +37,7 @@
                 </ul>
             {% endif %}
         </header>
-        
-        <body>
-        {% block body %}
-        {% endblock %}
-        </body>
+     {% block body %}{% endblock %}
 
         <footer></footer>
     </body>
