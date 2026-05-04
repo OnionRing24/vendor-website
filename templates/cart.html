@@ -1,15 +1,17 @@
-{% extends base.html %}
-{% blockbody %}
+{% extends "base.html" %}
+{% block body %}
 
     <h1>Cart</h1>
 
     <div class="cart-container">
-        {% for item in carts.cart %}
+        {% for cart_item in cart_items %}
             <div class="cart-item">
-                <h2>item.product.name</h2>
-                {% if item.product.visibility.name=='public' %}
-                    <h3>item.product.price</h3>
+                <h2>{{ cart_item.product.name }}</h2>
+                {% if cart_item.product.visibility.name=='public' %}
+                    <h3>{{ cart_item.product.price }}</h3>
                 {% endif %}
             </div>
         {% endfor %}
     </div>
+
+{% endblock %}

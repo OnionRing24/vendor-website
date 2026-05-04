@@ -1,3 +1,18 @@
+<style>
+    .select-btn {
+        border: 2px solid #000000;
+        padding: 10px 20px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    .select-btn.active {
+        color: white;
+        border-color: #c8431a;
+    }
+    
+    .submit-section { margin-top: 20px; }
+</style>
 {% extends "base.html" %}
 {% block body %}
 
@@ -7,14 +22,17 @@
 
         <div class="variant-group">
             {% for variant in variants %}
-            <div class="variant-container">
 
                 <!-- Minor error in style needs fix soon -->
-                <input type="radio" id="{{variant.product_variant_id}}" name='variant' class="circle-btn" value="{{variant.product_variant_id}}" required {% if loop.first %}checked{% endif %}>
-                <label for="{{variant.variant_id}}" style="padding: 2px; color: white; background-color: {{variant.color_code}};">{{variant.color_name}}</label>
+                <button type="button"
+                {% if loop.first %}class="select-btn active"{% else %}class="select-btn"{% endif %}
+                style="background-color: {{ variant.color_code or '#FFFFFF' }}"
+                onclick="setVal('{{ variant.product_variant_id }}', this)">
+                    {{variant.color_name}}
+                </button>
 
-            </div>
             {% endfor %}
+            <input name="user_choice" id="choice_input" value="0">
         </div>
 
         <h2>{{product.price}}</h2>
@@ -83,4 +101,18 @@
         </form>
     </div>
 
+
+    <script>
+        function setVal(val, btnElement) {
+            // Update hidden input value
+            document.getElementById('choice_input').value = val;
+
+            // Remove 'active' class from all buttons
+            let buttons = document.querySelectorAll('.select-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            // Add 'active' class to the clicked button
+            btnElement.classList.add('active');
+        }
+    </script>
 {% endblock %}

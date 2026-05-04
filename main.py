@@ -385,16 +385,16 @@ def view_product(product_id):
 @app.route('/add_to_cart/<int:product_id>', methods=['POST'])
 def add_to_cart(product_id):
     product = Product.query.get_or_404(product_id)
-    variant = ProductVariant.query.filter_by(product_variant_id=request.form.get('variant'))
+    variant_id = request.form.get('user_choice', 0, type=int)
     cart = db.session.query(Cart).filter_by(owner_id=session['user_id']).first()
 
     new_item = CartItem (
         cart_id=cart.cart_id,
         product_id=product.product_id,
-        variant_id=variant.product_variant_id,
+        variant_id=variant_id,
         quantity=1,
         price_at_addition=product.price,
-        visibility=product.VisibilityEnum
+        visibility=product.visibility
     )
     db.session.add(new_item)
     db.session.commit()
@@ -402,9 +402,9 @@ def add_to_cart(product_id):
 
 @app.route('/cart')
 def view_cart():
-    carts = db.session.query(Cart).filter_by(owner_id=session['user_id']).first()
-    cart_items = CartItem.query.filter_by(cart_id=carts.cart_id).all()
-    return render_template('cart.html', carts=carts, cart_items=cart_items)
+    cart = db.session.query(Cart).filter_by(owner_id=session['user_id']).first()
+    cart_items = CartItem.query.filter_by(cart_id=cart.cart_id).all()
+    return render_template('cart.html', cart=cart, cart_items=cart_items)
 
 
 
