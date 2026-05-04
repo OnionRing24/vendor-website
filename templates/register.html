@@ -42,7 +42,7 @@
     <form action="/register" method="POST" class="register-form">
        <div class = "field">
         <label for="role">Role</label>
-        <select name="role" class="input_field" required>
+        <select name="role" class="input-field" required>
             <option value="" disabled selected>Role</option>
             <option value="customer">Customer</option>
             <option value="vendor">Vendor</option>
@@ -50,24 +50,24 @@
        </div>
 
         <div class="field-row">
-         <input type="text" name="first_name" placeholder="First Name" class="input_field" required>
-         <input type="text" name="last_name" placeholder="Last Name" class="input_field" required>
+         <input type="text" name="first_name" placeholder="First Name" class="input-field" required>
+         <input type="text" name="last_name" placeholder="Last Name" class="input-field" required>
         </div>
 
         <div class ="field">
-            <input type="email" name="email" placeholder="Email" class="input_field" required>
+            <input type="email" name="email" placeholder="Email" class="input-field" required>
         </div>
 
         <div class="field">
-            <input type="text" name="username" placeholder="Username" class="input_field" required>
+            <input type="text" name="username" placeholder="Username" class="input-field" required>
         </div>
 
         <div class="field">
-            <input type="password" name="password" placeholder="Password" class="input_field" required>
+            <input type="password" name="password" placeholder="Password" class="input-field" required>
         </div>
 
         <div class="field">
-            <input type="password" name="confirm_password" placeholder="Confirm Password" class="input_field" required>
+            <input type="password" name="confirm_password" placeholder="Confirm Password" class="input-field" required>
         </div>
 
         <div class="field checkbox-field">
@@ -77,6 +77,9 @@
             </label>
         </div>
     
-        <button type="submit">Register</button>
-    </form> 
+        <button type="submit" class="btn">Register</button>
+    </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
