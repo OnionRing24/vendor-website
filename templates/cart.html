@@ -1,0 +1,15 @@
+{% extends base.html %}
+{% blockbody %}
+
+    <h1>Cart</h1>
+
+    <div class="cart-container">
+        {% for item in carts.cart %}
+            <div class="cart-item">
+                <h2>item.product.name</h2>
+                {% if item.product.visibility.name=='public' %}
+                    <h3>item.product.price</h3>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>

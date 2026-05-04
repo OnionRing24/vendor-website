@@ -42,6 +42,7 @@
                         <br>
                         <input type="number" name="product_width" value="{{variant.product_width}}" required>
                         <select name="unit_width" class="unit" required>
+                            <option value="" disabled {% if not variant.unit_width %}selected{% endif %}>Visibility</option>
                             <option value="in" {% if variant.unit_width == 'in' %}selected{% endif %}>Inches</option>
                             <option value="ft" {% if variant.unit_width == 'ft' %}selected{% endif %}>Feet</option>
                             <option value="mm" {% if variant.unit_width == 'mm' %}selected{% endif %}>Millimeters</option>
@@ -51,6 +52,7 @@
                         <br>
                         <input type="number" name="product_height" value="{{variant.product_height}}" required>
                         <select name="unit_height" class="unit" required>
+                            <option value="" disabled {% if not variant.unit_height %}selected{% endif %}>Visibility</option>
                             <option value="in" {% if variant.unit_height == 'in' %}selected{% endif %}>Inches</option>
                             <option value="ft" {% if variant.unit_height == 'ft' %}selected{% endif %}>Feet</option>
                             <option value="mm" {% if variant.unit_height == 'mm' %}selected{% endif %}>Millimeters</option>
@@ -71,11 +73,11 @@
         <br>
         
         <br>
-        <select name="visibility" class="visibility" required>
+        <select name="visibility" value="{{product.visibility}}" class="visibility" required>
             <option value="" disabled {% if not product.visibility %}selected{% endif %}>Visibility</option>
-            <option value="public" {% if product.visibility|string == 'public' %}selected{% endif %}>Public</option>
-            <option value="unlisted" {% if product.visibility|string == 'unlisted' %}selected{% endif %}>Unlisted</option>
             <option value="private" {% if product.visibility|string == 'private' %}selected{% endif %}>Private</option>
+            <option value="unlisted" {% if product.visibility|string == 'unlisted' %}selected{% endif %}>Unlisted</option>
+            <option value="public" {% if product.visibility|string == 'public' %}selected{% endif %}>Public</option>
         </select>
         <br>
         

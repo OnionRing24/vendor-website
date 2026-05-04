@@ -96,6 +96,7 @@ class CartItem(db.Model):
     cart_item_id = db.Column(db.Integer, primary_key=True)
     cart_id = db.Column(db.Integer, db.ForeignKey('cart.cart_id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
+    variant_id = db.Column(db.Integer, db.ForeignKey('product_variant.product_variant_id'), nullable=False)
     quantity = db.Column(db.Integer, default=1)
     price_at_addition = db.Column(db.Float)
     visibility = db.Column(db.Enum(VisibilityEnum), nullable=False)
@@ -189,6 +190,14 @@ def register():
         )
         db.session.add(new_user)
         db.session.commit()
+
+        if new_user.role.name == 'customer':
+            new_cart = Cart(
+                owner_id=new_user.account_id
+            )
+            db.session.add(new_cart)
+            db.session.commit()
+        
         return render_template('register.html', error=None, success="Account Created!")
     return render_template('register.html')
 
@@ -373,7 +382,29 @@ def view_product(product_id):
     reviews = Review.query.filter_by(product_id=product_id).all()
     return render_template('view_product.html', product=product, variants=variants, reviews=reviews)
 
+@app.route('/add_to_cart/<int:product_id>', methods=['POST'])
+def add_to_cart(product_id):
+    product = Product.query.get_or_404(product_id)
+    variant = ProductVariant.query.filter_by(product_variant_id=request.form.get('variant'))
+    cart = db.session.query(Cart).filter_by(owner_id=session['user_id']).first()
 
+    new_item = CartItem (
+        cart_id=cart.cart_id,
+        product_id=product.product_id,
+        variant_id=variant.product_variant_id,
+        quantity=1,
+        price_at_addition=product.price,
+        visibility=product.VisibilityEnum
+    )
+    db.session.add(new_item)
+    db.session.commit()
+    return render_template('view_product.html', product=product)
+
+@app.route('/cart')
+def view_cart():
+    carts = db.session.query(Cart).filter_by(owner_id=session['user_id']).first()
+    cart_items = CartItem.query.filter_by(cart_id=carts.cart_id).all()
+    return render_template('cart.html', carts=carts, cart_items=cart_items)
 
 
 

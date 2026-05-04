@@ -2,14 +2,20 @@
 {% block body %}
 
     <div class="product_page">
+        <form action="/add_to_cart/{{product.product_id}}", method="POST">
         <h1>{{product.name}}</h1>
 
-        {% for variant in variants %}
+        <div class="variant-group">
+            {% for variant in variants %}
+            <div class="variant-container">
 
-            <!-- Minor error in style needs fix soon -->
-            <button class="circle-btn" style="background-color: {{ variant.color_code or '#FFFFFF' }}">{{variant.color_name}}</button>
+                <!-- Minor error in style needs fix soon -->
+                <input type="radio" id="{{variant.product_variant_id}}" name='variant' class="circle-btn" value="{{variant.product_variant_id}}" required {% if loop.first %}checked{% endif %}>
+                <label for="{{variant.variant_id}}" style="padding: 2px; color: white; background-color: {{variant.color_code}};">{{variant.color_name}}</label>
 
-        {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
 
         <h2>{{product.price}}</h2>
 
@@ -72,10 +78,9 @@
         </h3>
 
         {% if session['role'] == 'customer' %}
-            <form method="POST" action="/add_to_cart/{{ product['product_id'] }}">
-                <button type="submit">Add to Cart</button>
-            </form>
+            <button type="submit">Add to Cart</button>
         {% endif %}
+        </form>
     </div>
 
 {% endblock %}
