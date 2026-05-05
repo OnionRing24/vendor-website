@@ -335,7 +335,8 @@ def add_product():
             vendor_id=session['user_id'],
             name=request.form['name'],
             description=request.form['description'],
-            price=request.form['price']
+            price=float(request.form['price']),
+            original_price=float(request.form['price'])
         )
         db.session.add(new_product)
         db.session.commit()
@@ -393,13 +394,13 @@ def edit_product(product_id):
             
             # 2. Handle Variants
             # We get lists for every field
-            color_codes = request.form.getlist('color_code')
-            color_names = request.form.getlist('color_name')
-            availables = request.form.getlist('available')
-            widths = request.form.getlist('product_width')
-            unit_widths = request.form.getlist('unit_width')
-            heights = request.form.getlist('product_height')
-            unit_heights = request.form.getlist('unit_height')
+            color_codes = request.form.getlist('color_code[]')
+            color_names = request.form.getlist('color_name[]')
+            availables = request.form.getlist('available[]')
+            widths = request.form.getlist('product_width[]')
+            unit_widths = request.form.getlist('unit_width[]')
+            heights = request.form.getlist('product_height[]')
+            unit_heights = request.form.getlist('unit_height[]')
 
             # Delete existing variants associated with this product
             ProductVariant.query.filter_by(product_id=product_id).delete()

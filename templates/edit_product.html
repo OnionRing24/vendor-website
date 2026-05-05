@@ -94,10 +94,10 @@
             div.innerHTML = `
                 <br>
                 <input type="color" name="color_code[]" value="#ff0000" required>
-                <input type="text" name="color_name[]" placeholder="Color Name" required>
-                <input type="number" name="available[]" placeholder="Amount Available" required>
+                <input type="text" name="color_name[]" value="New Color" required>
+                <input type="number" name="available[]" value="1" placeholder="Amount Available" required>
                 <br><br>
-                <input type="number" name="product_width[]" placeholder="Width" required>
+                <input type="number" name="product_width[]" value="10" placeholder="Width" required>
                 <select name="unit_width[]" class="unit" required>
                     <option value="" disabled selected>Unit</option>
                     <option value="in">Inches</option>
@@ -107,7 +107,7 @@
                     <option value="m">Meters</option>
                 </select>
                 <br>
-                <input type="number" name="product_height[]" placeholder="Height" required>
+                <input type="number" name="product_height[]" value="10" placeholder="Height" required>
                 <select name="unit_height[]" class="unit" required>
                     <option value="" disabled selected>Unit</option>
                     <option value="in">Inches</option>
