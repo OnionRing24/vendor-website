@@ -1,8 +1,15 @@
 {% extends "base.html" %}
 {% block body %}
+<div class="page">
     {% if session['username'] %}
-        <h1>Hello, {{ session['username'] }}</h1>
+        <div class="page-eyebrow">Welcome back</div>
+        <h1 class="page-title">{{ session['username'] }}</h1>
+        <p class="page-sub">Good to have you back at Zhiend.</p>
     {% else %}
-        <h1>Hello There</h1>
+        <div class="page-eyebrow">Instruments & Vinyls — Est. 2024</div>
+        <h1 class="page-title">Zhiend</h1>
+        <p class="page-sub">Discover rare records and fine instruments.</p>
+        <a href="/login" class="btn" style="margin-top:1rem;">Enter the Store</a>
     {% endif %}
+</div>
 {% endblock %}

@@ -1,10 +1,9 @@
 {% extends "base.html" %}
 {% block body %}
-<div style="padding: 2rem; font-family: 'Crimson Pro', serif; max-width: 960px;">
+<div class="page">
+    <div class="page-eyebrow">Admin</div>
+    <h1 class="page-title">Discount Requests</h1>
 
-    <h1 style="margin-bottom: 0.25rem;">Discount Requests</h1>
-
-    <!-- Tab bar -->
     <div class="tab-bar">
         <a href="/admin/discounts?status=pending"
            class="tab {% if status_filter == 'pending' %}tab--active{% endif %}">Pending</a>
@@ -15,13 +14,11 @@
     </div>
 
     {% if not requests %}
-        <p style="color: #7a7160; font-style: italic; margin-top: 1.5rem;">No {{ status_filter }} requests.</p>
+        <p style="color: var(--muted); font-style: italic; margin-top: 1.5rem;">No {{ status_filter }} requests.</p>
     {% endif %}
 
     {% for req in requests %}
     <div class="discount-card">
-
-        <!-- Header row -->
         <div class="dc-header">
             <div>
                 <span class="dc-product-name">{{ req.product.name }}</span>
@@ -30,7 +27,6 @@
             <span class="dc-status dc-status--{{ req.status.name }}">{{ req.status.name }}</span>
         </div>
 
-        <!-- Price info -->
         <div class="dc-prices">
             <div class="dc-price-block">
                 <span class="dc-price-label">Current price</span>
@@ -41,7 +37,7 @@
                 <span class="dc-price-label">Requested price</span>
                 <span class="dc-price dc-price--new">${{ "%.2f"|format(req.requested_price) }}</span>
             </div>
-            <div class="dc-price-block dc-price-block--saving">
+            <div class="dc-price-block">
                 <span class="dc-price-label">Saving</span>
                 <span class="dc-price dc-price--saving">
                     {{ "%.0f"|format((1 - req.requested_price / req.product.original_price) * 100) }}% off
@@ -49,24 +45,19 @@
             </div>
         </div>
 
-        <!-- Expiry -->
         <div class="dc-meta">
             <span>⏱ Expires: <strong>{{ req.discount_end.strftime('%b %d, %Y at %H:%M') }}</strong>
                 {% if req.discount_end < now %}
-                    <span style="color:#c8431a;">(already past)</span>
+                    <span style="color:var(--accent);">(already past)</span>
                 {% endif %}
             </span>
             <span style="margin-left: 1.5rem;">📅 Submitted: {{ req.created_at.strftime('%b %d, %Y') }}</span>
         </div>
 
-        <!-- Vendor reason -->
         {% if req.reason %}
-        <div class="dc-reason">
-            <strong>Vendor note:</strong> {{ req.reason }}
-        </div>
+        <div class="dc-reason"><strong>Vendor note:</strong> {{ req.reason }}</div>
         {% endif %}
 
-        <!-- Admin action -->
         {% if req.status.name == 'pending' %}
         <div class="dc-actions">
             <form action="/admin/discounts/{{ req.request_id }}/approve" method="POST" style="flex:1;">
@@ -80,132 +71,16 @@
         </div>
         {% else %}
             {% if req.admin_note %}
-            <div class="dc-reason" style="border-color:#3a3628;">
+            <div class="dc-reason" style="border-color:var(--border);">
                 <strong>Admin note:</strong> {{ req.admin_note }}
-                <span style="color:#7a7160; margin-left:1rem;">
+                <span style="color:var(--muted); margin-left:1rem;">
                     — {{ req.reviewer.username if req.reviewer else '?' }},
                     {{ req.reviewed_at.strftime('%b %d, %Y') if req.reviewed_at }}
                 </span>
             </div>
             {% endif %}
         {% endif %}
-
     </div>
     {% endfor %}
 </div>
-
-<style>
-/* Tab bar */
-.tab-bar { display: flex; gap: 0; margin: 1.25rem 0 1.5rem; border-bottom: 1px solid #2a2720; }
-.tab {
-    padding: 0.6rem 1.25rem;
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    text-decoration: none;
-    color: #7a7160;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -1px;
-    transition: color 0.15s, border-color 0.15s;
-}
-.tab:hover { color: #f2ead8; }
-.tab--active { color: #f2ead8; border-bottom-color: #c8431a; }
-
-/* Card */
-.discount-card {
-    background: #1a1812;
-    border: 1px solid #2a2720;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1.25rem;
-}
-.dc-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-}
-.dc-product-name {
-    font-size: 20px;
-    font-weight: 600;
-    color: #f2ead8;
-}
-.dc-vendor {
-    font-size: 13px;
-    color: #7a7160;
-    margin-left: 0.5rem;
-    font-style: italic;
-}
-.dc-status {
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    padding: 3px 8px;
-    border-radius: 4px;
-}
-.dc-status--pending  { background: #2a2404; color: #e8b84b; border: 1px solid #4a3e08; }
-.dc-status--approved { background: #0d2010; color: #4caf50; border: 1px solid #1a4020; }
-.dc-status--rejected { background: #200d0d; color: #c8431a; border: 1px solid #401a1a; }
-
-/* Prices */
-.dc-prices {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    margin-bottom: 0.85rem;
-    flex-wrap: wrap;
-}
-.dc-price-block { display: flex; flex-direction: column; }
-.dc-price-label { font-size: 11px; color: #7a7160; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
-.dc-price { font-size: 22px; color: #f2ead8; font-weight: 600; }
-.dc-price--new  { color: #c8431a; }
-.dc-price--saving { color: #4caf50; font-size: 18px; }
-.dc-arrow { color: #7a7160; font-size: 20px; }
-
-/* Meta */
-.dc-meta { font-size: 14px; color: #9e9278; margin-bottom: 0.75rem; }
-
-/* Reason */
-.dc-reason {
-    font-size: 14px;
-    color: #c4b99a;
-    background: #111009;
-    border-left: 3px solid #c8431a;
-    padding: 0.6rem 0.9rem;
-    border-radius: 0 4px 4px 0;
-    margin-bottom: 1rem;
-}
-
-/* Actions */
-.dc-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
-.dc-note-input {
-    width: 100%;
-    padding: 8px 10px;
-    background: #111009;
-    border: 1px solid #3a3628;
-    border-radius: 4px;
-    color: #f2ead8;
-    font-family: 'Crimson Pro', serif;
-    font-size: 14px;
-    margin-bottom: 0.5rem;
-    outline: none;
-}
-.dc-note-input:focus { border-color: #c8431a; }
-.dc-btn {
-    width: 100%;
-    padding: 10px;
-    border: none;
-    border-radius: 4px;
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 16px;
-    letter-spacing: 2px;
-    cursor: pointer;
-    transition: opacity 0.15s;
-}
-.dc-btn:hover { opacity: 0.85; }
-.dc-btn--approve { background: #1a4020; color: #4caf50; border: 1px solid #2a6030; }
-.dc-btn--reject  { background: #401a1a; color: #c8431a; border: 1px solid #601a1a; }
-</style>
 {% endblock %}

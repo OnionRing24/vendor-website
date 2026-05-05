@@ -1,10 +1,13 @@
 {% extends "base.html" %}
 {% block body %}
-    <h2>{{ session['username'] }}</h2>
-    <h1>Vendor Dashboard</h1>
+<div class="page">
+    <div class="page-eyebrow">Vendor Portal</div>
+    <h1 class="page-title">{{ session['username'] }}</h1>
+    <p class="page-sub">Manage your products and track your sales.</p>
 
-    <div class="flex-box">
-        <h3><a href='/add_product'>Add Products</a></h3>
-        <h3><a href='/manage_product'>Manage Products</a></h3>
+    <div class="vendor-grid">
+        <a href="/add_product" class="vendor-card">+ Add Product</a>
+        <a href="/manage_product" class="vendor-card">Manage Products</a>
     </div>
+</div>
 {% endblock %}
