@@ -367,7 +367,7 @@ def edit_product(product_id):
     product = Product.query.get_or_404(product_id)
 
     if product.vendor_id != session['user_id']:
-        redirect('/')
+        return redirect('/')
     
     if request.method == 'POST':
         try:
@@ -419,6 +419,17 @@ def edit_product(product_id):
     # GET Request Logic
     variants = ProductVariant.query.filter_by(product_id=product_id).all()
     return render_template('edit_product.html', product=product, variants=variants)
+
+@app.route('/delete_variant/<int:variant_id>', methods=['DELETE'])
+def delete_variant(variant_id):
+    variant = ProductVariant.query.get_or_404(variant_id)
+    product = Product.query.get_or_404(variant.product_id)
+    if product.vendor_id != session.get('user_id'):
+        return '', 403
+
+    db.session.delete(variant)
+    db.session.commit()
+    return '', 204
 
 @app.route('/view_product/<int:product_id>')
 def view_product(product_id):
