@@ -6,7 +6,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import enum
 
 app = Flask(__name__)
-# Replace with your actual credentials
 app.config['SECRET_KEY'] = 'dev'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:cset155@localhost/storedb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -77,8 +76,7 @@ class ProductVariant(db.Model):
     color_code = db.Column(db.String(50))
     color_name = db.Column(db.String(50))
     
-    # Separated columns
-    product_width = db.Column(db.Float)  # Changed to Float for precision
+    product_width = db.Column(db.Float)
     unit_width = db.Column(db.String(10)) 
     
     product_height = db.Column(db.Float)
@@ -203,25 +201,30 @@ def expire_active_discounts():
         db.session.commit()
 
 
-
+# Creates SQL Tables if not in database
 with app.app_context():
     db.create_all()
 
+# Sends user to index.html
 @app.route('/')
 def index():
     return render_template('index.html')
 
+# Creates an account
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+        # Ensures both password boxes match before addng tables
         check_password=request.form.get('password')
         confirm_password=request.form.get('confirm_password')
 
         if check_password != confirm_password:
             return render_template('register.html', error='Passwords do not match', success=None)
         
+        # hashes the password for encryption
         password_hash = generate_password_hash(request.form['password'])
         
+        # Adds the account to the database
         new_user = Account(
             first_name=request.form['first_name'],
             last_name=request.form['last_name'],
@@ -233,6 +236,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
+        # Automatically generates shopping cart if account is customer
         if new_user.role.name == 'customer':
             new_cart = Cart(
                 owner_id=new_user.account_id
@@ -246,18 +250,22 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        # Using email since that's a unique attribute
         email = request.form['email']
         password = request.form['password']
+        # Checks to see if account exists
         user = Account.query.filter_by(email=email).first()
         if user and check_password_hash(user.password_hash, password):
 
+            # Saves information as a session
             session['first_name'] = user.first_name
             session['last_name'] = user.last_name
             session['user_id'] = user.account_id
             session['username'] = user.username
             session['email'] = user.email
             session['role'] = user.role.name
-            session['password'] = user.password_hash
+
+            # Sends user to their respective home pages
             if session['role'] == 'vendor':
                 return redirect('/vendor')
             if session['role'] == 'admin':  
@@ -269,13 +277,14 @@ def login():
 
 @app.route('/logout')
 def logout():
+    # Clears session and logs out user entirely
     session.clear()
     return redirect('/login')
 
 @app.route('/settings', methods=['GET', 'POST'])
 def edit_account():
     if request.method == 'POST':
-        user = Account.query.filter_by(email=session['email'], password_hash=session['password']).first()
+        user = Account.query.filter_by(email=session['email'], account_id=session['user_id']).first()
 
         if request.form['first_name']:
             user.first_name = request.form['first_name']
@@ -295,17 +304,17 @@ def edit_account():
             if check_password != confirm_password:
                 return render_template('settings.html', error='Passwords do not match', success=None)
             user.password_hash = generate_password_hash(request.form['password'])
-            session['password'] = user.password_hash
         
         db.session.commit()
         return render_template('settings.html', error=None, success='Changes Saved')
     return render_template('settings.html')
 
-
+# Sends to vendor's homepage
 @app.route('/vendor')
 def vendor_dashboard():
     return render_template('vendor.html')
 
+# Displays all public products in pages
 @app.route('/products')
 @app.route('/products/<page>')
 def get_products(page=1):
@@ -321,6 +330,7 @@ def get_products(page=1):
 @app.route('/add_product', methods=['GET', 'POST'])
 def add_product():
     if request.method == 'POST':
+        # Creates a new product tale
         new_product = Product(
             vendor_id=session['user_id'],
             name=request.form['name'],
@@ -330,6 +340,7 @@ def add_product():
         db.session.add(new_product)
         db.session.commit()
 
+        # Add the product's first variant
         product = Product.query.filter_by(vendor_id=session['user_id'], name=request.form['name']).first()
 
         new_variant = ProductVariant(
@@ -344,6 +355,7 @@ def add_product():
         )
         db.session.add(new_variant)
         db.session.commit()
+        # Sends to manage product for convenience
         return redirect('/manage_product')
     return render_template('add_product.html')
 
@@ -352,10 +364,12 @@ def add_product():
 def my_products(page=1):
     account_id = session.get('user_id')
     page = int(page)
+    # Ensures that user is the vendor
     if not account_id:
         return redirect('/login')
     
     per_page = 10
+    # Displays all products made by the vendor
     paginated = db.session.query(Product).filter_by(vendor_id=account_id).paginate(page=page, per_page=per_page, error_out=False)
     products = paginated.items
 
@@ -420,6 +434,7 @@ def edit_product(product_id):
     variants = ProductVariant.query.filter_by(product_id=product_id).all()
     return render_template('edit_product.html', product=product, variants=variants)
 
+# A dedicated product page for a specific product
 @app.route('/view_product/<int:product_id>')
 def view_product(product_id):
     expire_active_discounts()
@@ -433,12 +448,16 @@ def add_to_cart(product_id):
     product = Product.query.get_or_404(product_id)
     variant_id = request.form.get('user_choice', 0, type=int)
     cart = db.session.query(Cart).filter_by(owner_id=session['user_id']).first()
+
+    # Makes sure that product (and it's variant) doesn't already exist in the cart
     cart_check = db.session.query(CartItem).filter_by(cart_id=cart.cart_id, product_id=product_id, variant_id=variant_id).all()
 
+    # If it does, it increases the quantity instead
     if cart_check:
         item = db.session.query(CartItem).filter_by(cart_id=cart.cart_id, product_id=product_id, variant_id=variant_id).first()
         item.quantity += 1
 
+    # Adds product as a cart item to database
     else:
         new_item = CartItem (
             cart_id=cart.cart_id,
@@ -452,6 +471,7 @@ def add_to_cart(product_id):
     db.session.commit()
     return redirect(f'/view_product/{product.product_id}', success='Item Added to Cart')
 
+# Displays Cart items
 @app.route('/cart')
 def view_cart():
     cart = db.session.query(Cart).filter_by(owner_id=session['user_id']).first()
