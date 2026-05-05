@@ -38,6 +38,11 @@ class ClaimStatus(enum.Enum):
     processing = "processing"
     complete = "complete"
 
+class DiscountRequestStatus(enum.Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+
 # --- Models ---
 
 class Account(db.Model):
@@ -162,6 +167,42 @@ class Message(db.Model):
     sent_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_read = db.Column(db.Boolean, default=False)
 
+class DiscountRequest(db.Model):
+    __tablename__ = 'discount_request'
+    request_id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
+    vendor_id = db.Column(db.Integer, db.ForeignKey('account.account_id'), nullable=False)
+    requested_price = db.Column(db.Float, nullable=False)
+    discount_end = db.Column(db.DateTime, nullable=False)
+    reason = db.Column(db.Text)
+    status = db.Column(db.Enum(DiscountRequestStatus), default=DiscountRequestStatus.pending, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    reviewed_at = db.Column(db.DateTime)
+    reviewed_by = db.Column(db.Integer, db.ForeignKey('account.account_id'))
+    admin_note = db.Column(db.Text)
+
+    product = db.relationship('Product', backref='discount_requests', lazy=True)
+    vendor = db.relationship('Account', foreign_keys=[vendor_id], backref='submitted_discounts', lazy=True)
+    reviewer = db.relationship('Account', foreign_keys=[reviewed_by], backref='reviewed_discounts', lazy=True)
+    # helper
+def expire_active_discounts():
+    """Revert products whose discount window has passed."""
+    now = datetime.utcnow()
+    expired = Product.query.filter(
+        Product.is_discount == True,
+        Product.discount_end != None,
+        Product.discount_end <= now
+    ).all()
+    for p in expired:
+        p.price = p.original_price
+        p.is_discount = False
+        p.discount_start = None
+        p.discount_end = None
+    if expired:
+        db.session.commit()
+
+
+
 with app.app_context():
     db.create_all()
 
@@ -218,6 +259,8 @@ def login():
             session['password'] = user.password_hash
             if session['role'] == 'vendor':
                 return redirect('/vendor')
+            if session['role'] == 'admin':  
+                return redirect('/admin') 
             return redirect('/')
         else:
             return render_template('login.html', error='Invalid email or password')
@@ -265,6 +308,7 @@ def vendor_dashboard():
 @app.route('/products')
 @app.route('/products/<page>')
 def get_products(page=1):
+    expire_active_discounts()
     page = int(page)
     per_page = 10
     paginated = db.session.query(Product).paginate(page=page, per_page=per_page, error_out=False)
@@ -377,6 +421,7 @@ def edit_product(product_id):
 
 @app.route('/view_product/<int:product_id>')
 def view_product(product_id):
+    expire_active_discounts()
     product = Product.query.get_or_404(product_id)
     variants = ProductVariant.query.filter_by(product_id=product_id).all()
     reviews = Review.query.filter_by(product_id=product_id).all()
@@ -406,7 +451,140 @@ def view_cart():
     cart_items = CartItem.query.filter_by(cart_id=carts.cart_id).all()
     return render_template('cart.html', carts=carts, cart_items=cart_items)
 
+@app.route('/request_discount/<int:product_id>', methods=['POST'])
+def request_discount(product_id):
+    if session.get('role') != 'vendor':
+        return redirect('/')
+    product = Product.query.get_or_404(product_id)
+    if product.vendor_id != session['user_id']:
+        return redirect('/')
 
+    existing = DiscountRequest.query.filter_by(
+        product_id=product_id,
+        status=DiscountRequestStatus.pending
+    ).first()
+    if existing:
+        variants = ProductVariant.query.filter_by(product_id=product_id).all()
+        return render_template('edit_product.html', product=product, variants=variants,
+                               pending_discount=existing,
+                               error="A discount request is already pending admin approval.")
+    try:
+        requested_price = float(request.form['requested_price'])
+        discount_end = datetime.strptime(request.form['discount_end'], '%Y-%m-%dT%H:%M')
+        reason = request.form.get('reason', '')
+
+        if requested_price <= 0:
+            raise ValueError("Price must be positive.")
+        if requested_price >= product.price:
+            raise ValueError("Discount price must be lower than the current price.")
+        if discount_end <= datetime.utcnow():
+            raise ValueError("Expiration date must be in the future.")
+
+        new_request = DiscountRequest(
+            product_id=product_id,
+            vendor_id=session['user_id'],
+            requested_price=requested_price,
+            discount_end=discount_end,
+            reason=reason,
+            status=DiscountRequestStatus.pending
+        )
+        db.session.add(new_request)
+        db.session.commit()
+
+        variants = ProductVariant.query.filter_by(product_id=product_id).all()
+        return render_template('edit_product.html', product=product, variants=variants,
+                               pending_discount=new_request,
+                               success="Discount request submitted! Awaiting admin approval.")
+    except ValueError as e:
+        variants = ProductVariant.query.filter_by(product_id=product_id).all()
+        pending_discount = DiscountRequest.query.filter_by(
+            product_id=product_id, status=DiscountRequestStatus.pending).first()
+        return render_template('edit_product.html', product=product, variants=variants,
+                               pending_discount=pending_discount, error=str(e))
+
+
+@app.route('/cancel_discount_request/<int:request_id>', methods=['POST'])
+def cancel_discount_request(request_id):
+    if session.get('role') != 'vendor':
+        return redirect('/')
+    dr = DiscountRequest.query.get_or_404(request_id)
+    if dr.vendor_id != session['user_id']:
+        return redirect('/')
+    if dr.status == DiscountRequestStatus.pending:
+        db.session.delete(dr)
+        db.session.commit()
+    return redirect(f'/edit_product/{dr.product_id}')
+
+
+@app.route('/admin')
+def admin_dashboard():
+    if session.get('role') != 'admin':
+        return redirect('/')
+    pending_count = DiscountRequest.query.filter_by(status=DiscountRequestStatus.pending).count()
+    return render_template('admin.html', pending_count=pending_count)
+
+
+@app.route('/admin/discounts')
+def admin_discounts():
+    if session.get('role') != 'admin':
+        return redirect('/')
+    expire_active_discounts()
+
+    status_filter = request.args.get('status', 'pending')
+    try:
+        status_enum = DiscountRequestStatus[status_filter]
+    except KeyError:
+        status_enum = DiscountRequestStatus.pending
+
+    requests = (
+        DiscountRequest.query
+        .filter_by(status=status_enum)
+        .order_by(DiscountRequest.created_at.desc())
+        .all()
+    )
+    return render_template('admin_discounts.html', requests=requests,
+                           status_filter=status_filter, now=datetime.utcnow())
+
+
+@app.route('/admin/discounts/<int:request_id>/approve', methods=['POST'])
+def approve_discount(request_id):
+    if session.get('role') != 'admin':
+        return redirect('/')
+    dr = DiscountRequest.query.get_or_404(request_id)
+    if dr.status != DiscountRequestStatus.pending:
+        return redirect('/admin/discounts')
+
+    product = Product.query.get(dr.product_id)
+    product.original_price = product.original_price or product.price
+    product.price = dr.requested_price
+    product.is_discount = True
+    product.discount_start = datetime.utcnow()
+    product.discount_end = dr.discount_end
+
+    dr.status = DiscountRequestStatus.approved
+    dr.reviewed_at = datetime.utcnow()
+    dr.reviewed_by = session['user_id']
+    dr.admin_note = request.form.get('admin_note', '')
+
+    db.session.commit()
+    return redirect('/admin/discounts')
+
+
+@app.route('/admin/discounts/<int:request_id>/reject', methods=['POST'])
+def reject_discount(request_id):
+    if session.get('role') != 'admin':
+        return redirect('/')
+    dr = DiscountRequest.query.get_or_404(request_id)
+    if dr.status != DiscountRequestStatus.pending:
+        return redirect('/admin/discounts')
+
+    dr.status = DiscountRequestStatus.rejected
+    dr.reviewed_at = datetime.utcnow()
+    dr.reviewed_by = session['user_id']
+    dr.admin_note = request.form.get('admin_note', '')
+
+    db.session.commit()
+    return redirect('/admin/discounts')
 
 if __name__ == '__main__':
     app.run(debug=True)

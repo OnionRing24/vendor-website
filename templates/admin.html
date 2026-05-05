@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block body %}
+<div style="padding: 2rem;">
+    <h1>Admin Dashboard</h1>
+    <div style="display: flex; gap: 2rem; margin-top: 1.5rem; flex-wrap: wrap;">
+
+        <a href="/admin/discounts?status=pending" class="admin-card">
+            <div class="admin-card-count">{{ pending_count }}</div>
+            <div class="admin-card-label">Pending Discount Requests</div>
+        </a>
+
+        <a href="/admin/discounts?status=approved" class="admin-card">
+            <div class="admin-card-label">View Approved Discounts</div>
+        </a>
+
+        <a href="/admin/discounts?status=rejected" class="admin-card">
+            <div class="admin-card-label">View Rejected Requests</div>
+        </a>
+
+    </div>
+</div>
+
+<style>
+.admin-card {
+    display: block;
+    background: #1e1c15;
+    border: 1px solid #2a2720;
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    text-decoration: none;
+    color: #f2ead8;
+    min-width: 180px;
+    transition: border-color 0.15s;
+    font-family: 'Crimson Pro', serif;
+}
+.admin-card:hover { border-color: #c8431a; }
+.admin-card-count {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    color: #c8431a;
+    line-height: 1;
+}
+.admin-card-label { font-size: 15px; color: #9e9278; margin-top: 4px; }
+</style>
+{% endblock %}

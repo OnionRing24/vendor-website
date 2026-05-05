@@ -14,7 +14,7 @@
     <form action="/edit_product/{{ product.product_id }}" method="POST">
         <input type="text" name="name" value="{{product.name}}" class="input_field" required>
         <input type="text" name="description" value="{{product.description}}" class="input_field" required>
-        <input type="input" step="0.01" min="0.01" name="price" value="{{product.price}}" class="input_field" required>
+        <input type="number" step="0.01" min="0.01" name="price" value="{{product.price}}" class="input_field" required>
         <br>
 
 <!--
@@ -35,14 +35,14 @@
                 {% for variant in variants %}
                     <div class="input_group">
                         <br>
-                        <input type="color" name="color_code" value="{{variant.color_code}}" requred>
-                        <input type="text" name="color_name" value="{{variant.color_name}}" required>
-                        <input type="number" name="available" value="{{variant.available}}" placeholder="Amount Available" required>
+                        <input type="color" name="color_code[]" value="{{variant.color_code}}" required>
+                        <input type="text" name="color_name[]" value="{{variant.color_name}}" required>
+                        <input type="number" name="available[]" value="{{variant.available}}" placeholder="Amount Available" required>
                         <br>
                         <br>
-                        <input type="number" name="product_width" value="{{variant.product_width}}" required>
-                        <select name="unit_width" class="unit" required>
-                            <option value="" disabled {% if not variant.unit_width %}selected{% endif %}>Visibility</option>
+                        <input type="number" name="product_width[]" value="{{variant.product_width}}" required>
+                        <select name="unit_width[]" class="unit" required>
+                            <option value="" disabled {% if not variant.unit_width %}selected{% endif %}>Unit</option>
                             <option value="in" {% if variant.unit_width == 'in' %}selected{% endif %}>Inches</option>
                             <option value="ft" {% if variant.unit_width == 'ft' %}selected{% endif %}>Feet</option>
                             <option value="mm" {% if variant.unit_width == 'mm' %}selected{% endif %}>Millimeters</option>
@@ -50,9 +50,9 @@
                             <option value="m" {% if variant.unit_width == 'm' %}selected{% endif %}>Meters</option>
                         </select>
                         <br>
-                        <input type="number" name="product_height" value="{{variant.product_height}}" required>
-                        <select name="unit_height" class="unit" required>
-                            <option value="" disabled {% if not variant.unit_height %}selected{% endif %}>Visibility</option>
+                        <input type="number" name="product_height[]" value="{{variant.product_height}}" required>
+                        <select name="unit_height[]" class="unit" required>
+                            <option value="" disabled {% if not variant.unit_height %}selected{% endif %}>Unit</option>
                             <option value="in" {% if variant.unit_height == 'in' %}selected{% endif %}>Inches</option>
                             <option value="ft" {% if variant.unit_height == 'ft' %}selected{% endif %}>Feet</option>
                             <option value="mm" {% if variant.unit_height == 'mm' %}selected{% endif %}>Millimeters</option>
@@ -93,12 +93,12 @@
             // We use innerHTML to define the complex structure of the variant fields
             div.innerHTML = `
                 <br>
-                <input type="color" name="color_code" value="#ff0000" required>
-                <input type="text" name="color_name" placeholder="Color Name" required>
-                <input type="number" name="available" placeholder="Amount Available" required>
+                <input type="color" name="color_code[]" value="#ff0000" required>
+                <input type="text" name="color_name[]" placeholder="Color Name" required>
+                <input type="number" name="available[]" placeholder="Amount Available" required>
                 <br><br>
-                <input type="number" name="product_width" placeholder="Width" required>
-                <select name="unit_width" class="unit" required>
+                <input type="number" name="product_width[]" placeholder="Width" required>
+                <select name="unit_width[]" class="unit" required>
                     <option value="" disabled selected>Unit</option>
                     <option value="in">Inches</option>
                     <option value="ft">Feet</option>
@@ -107,8 +107,8 @@
                     <option value="m">Meters</option>
                 </select>
                 <br>
-                <input type="number" name="product_height" placeholder="Height" required>
-                <select name="unit_height" class="unit" required>
+                <input type="number" name="product_height[]" placeholder="Height" required>
+                <select name="unit_height[]" class="unit" required>
                     <option value="" disabled selected>Unit</option>
                     <option value="in">Inches</option>
                     <option value="ft">Feet</option>
@@ -146,4 +146,74 @@
             }
         }
     </script>
+<!-- ══════════════════════════════════════════════════ -->
+<!--  DISCOUNT REQUEST SECTION                          -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="discount-section">
+    <h2 class="ds-title">Discount Request</h2>
+
+    {% if product.is_discount %}
+    <div class="ds-active-badge">
+        🏷 <strong>Active discount:</strong>
+        ${{ "%.2f"|format(product.price) }}
+        (was ${{ "%.2f"|format(product.original_price) }})
+        — expires {{ product.discount_end.strftime('%b %d, %Y %H:%M') if product.discount_end else 'no expiry' }}
+    </div>
+    {% endif %}
+
+    {% if pending_discount %}
+    <div class="ds-pending-box">
+        <div class="ds-pending-header">
+            <span class="ds-pending-label">⏳ Pending approval</span>
+            <span class="ds-pending-date">Submitted {{ pending_discount.created_at.strftime('%b %d, %Y') }}</span>
+        </div>
+
+        <div class="ds-pending-detail">
+            Requested price: <strong>${{ "%.2f"|format(pending_discount.requested_price) }}</strong>
+            · Expires: <strong>{{ pending_discount.discount_end.strftime('%b %d, %Y at %H:%M') }}</strong>
+        </div>
+
+        {% if pending_discount.reason %}
+        <div class="ds-pending-reason">{{ pending_discount.reason }}</div>
+        {% endif %}
+
+        <form action="/cancel_discount_request/{{ pending_discount.request_id }}" method="POST">
+            <button type="submit" class="ds-cancel-btn">Cancel request</button>
+        </form>
+    </div>
+
+    {% else %}
+    <form action="/request_discount/{{ product.product_id }}" method="POST" class="ds-form">
+
+        <div class="ds-field">
+            <label class="ds-label">Discounted Price ($)</label>
+            <input type="number" name="requested_price" step="0.01" min="0.01"
+                   max="{{ product.price - 0.01 }}"
+                   placeholder="e.g. {{ "%.2f"|format(product.price * 0.8) }}"
+                   class="ds-input" required>
+        </div>
+
+        <div class="ds-field">
+            <label class="ds-label">Discount Expires On</label>
+            <input type="datetime-local" name="discount_end" class="ds-input" required>
+        </div>
+
+        <div class="ds-field">
+            <label class="ds-label">Reason (optional)</label>
+            <textarea name="reason" class="ds-input"></textarea>
+        </div>
+
+        <button type="submit" class="ds-submit-btn">Submit for Approval</button>
+    </form>
+    {% endif %}
+</div>
+
+<style>
+.discount-section { margin-top:2rem; padding:1rem; border:1px solid #333; }
+.ds-title { font-size:20px; margin-bottom:10px; }
+.ds-input { padding:6px; margin-top:4px; }
+.ds-submit-btn { margin-top:10px; }
+.ds-cancel-btn { margin-top:10px; }
+</style>
+
 {% endblock %}
