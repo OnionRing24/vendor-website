@@ -480,7 +480,7 @@ def add_to_cart(product_id):
         )
         db.session.add(new_item)
     db.session.commit()
-    return redirect(f'/view_product/{product.product_id}', success='Item Added to Cart')
+    return redirect(f'/view_product/{product.product_id}')
 
 # Displays Cart items
 @app.route('/cart')
