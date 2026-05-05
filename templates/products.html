@@ -11,7 +11,7 @@
                     <div class="product">
                         <ul>
                             <li><h1>{{product.name}}</h1></li>
-                            <li><h2>{{product.price}}</h2></li>
+                            <li><h2>${{product.price}}</h2></li>
                             <li><p>{{product.vendor.username}}</p></li>
                             <li>
                                 {% if product.rating >= 0 %}

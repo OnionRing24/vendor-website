@@ -16,6 +16,10 @@
 {% extends "base.html" %}
 {% block body %}
 
+    {% if success %}
+        <h2>{{ success }}</h2>
+    {% endif %}
+
     <div class="product_page">
         <form action="/add_to_cart/{{product.product_id}}", method="POST">
         <h1>{{product.name}}</h1>

@@ -90,7 +90,7 @@ class ProductImage(db.Model):
 class Cart(db.Model):
     cart_id = db.Column(db.Integer, primary_key=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('account.account_id'), nullable=False)
-    items = db.relationship('CartItem', backref='cart', lazy=True, cascade="all, delete-orphan")
+    items = db.relationship('CartItem', backref='item', lazy=True, cascade="all, delete-orphan")
 
 class CartItem(db.Model):
     cart_item_id = db.Column(db.Integer, primary_key=True)
@@ -101,6 +101,7 @@ class CartItem(db.Model):
     price_at_addition = db.Column(db.Float)
     visibility = db.Column(db.Enum(VisibilityEnum), nullable=False)
     product = db.relationship('Product', backref='product', lazy=True)
+    variant = db.relationship('ProductVariant', backref='variant', lazy=True)
 
 class Order(db.Model):
     __tablename__ = 'orders'
@@ -299,7 +300,7 @@ def add_product():
         )
         db.session.add(new_variant)
         db.session.commit()
-        return redirect('/products')
+        return redirect('/manage_product')
     return render_template('add_product.html')
 
 @app.route('/manage_product')
@@ -387,18 +388,24 @@ def add_to_cart(product_id):
     product = Product.query.get_or_404(product_id)
     variant_id = request.form.get('user_choice', 0, type=int)
     cart = db.session.query(Cart).filter_by(owner_id=session['user_id']).first()
+    cart_check = db.session.query(CartItem).filter_by(cart_id=cart.cart_id, product_id=product_id, variant_id=variant_id).all()
 
-    new_item = CartItem (
-        cart_id=cart.cart_id,
-        product_id=product.product_id,
-        variant_id=variant_id,
-        quantity=1,
-        price_at_addition=product.price,
-        visibility=product.visibility
-    )
-    db.session.add(new_item)
+    if cart_check:
+        item = db.session.query(CartItem).filter_by(cart_id=cart.cart_id, product_id=product_id, variant_id=variant_id).first()
+        item.quantity += 1
+
+    else:
+        new_item = CartItem (
+            cart_id=cart.cart_id,
+            product_id=product.product_id,
+            variant_id=variant_id,
+            quantity=1,
+            price_at_addition=product.price,
+            visibility=product.visibility
+        )
+        db.session.add(new_item)
     db.session.commit()
-    return render_template('view_product.html', product=product)
+    return redirect(f'/view_product/{product.product_id}', success='Item Added to Cart')
 
 @app.route('/cart')
 def view_cart():

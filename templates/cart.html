@@ -5,13 +5,33 @@
 
     <div class="cart-container">
         {% for cart_item in cart_items %}
+
             <div class="cart-item">
                 <h2>{{ cart_item.product.name }}</h2>
+                <h3>{{ cart_item.variant.color_name }}</h3>
                 {% if cart_item.product.visibility.name=='public' %}
-                    <h3>{{ cart_item.product.price }}</h3>
+                    <h3>${{ cart_item.product.price }}</h3>
                 {% endif %}
+                <input type="number" class="quantity-input" value="{{ cart_item.quantity }}" min="0">
             </div>
+
         {% endfor %}
+    </div>
+
+    <br>
+
+    <div class="price-containter">
+        {% for cart_item in cart_items %}
+
+            <div>
+                <p>{{ cart_item.product.name }}</p>
+                <p>{{ cart_item.variant.color_name }}</p>
+                <p>${{ cart_item.product.price }}</p>
+            </div>
+
+        {% endfor %}
+
+        <h2></h2>
     </div>
 
 {% endblock %}
