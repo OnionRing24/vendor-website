@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import event, CheckConstraint
+from sqlalchemy import event, CheckConstraint, func
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 import enum
@@ -380,8 +380,10 @@ def my_products(page=1):
 @app.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
 def edit_product(product_id):
     product = Product.query.get_or_404(product_id)
+    # Get current variants from DB
+    existing_variants = ProductVariant.query.filter_by(product_id=product_id).all()
 
-    if product.vendor_id != session['user_id']:
+    if product.vendor_id != session.get('user_id'):
         return redirect('/')
     
     if request.method == 'POST':
@@ -391,9 +393,8 @@ def edit_product(product_id):
             product.description = request.form.get('description')
             product.price = float(request.form.get('price'))
             product.visibility = request.form.get('visibility')
-            
-            # 2. Handle Variants
-            # We get lists for every field
+
+            # 2. Get data from form
             color_codes = request.form.getlist('color_code[]')
             color_names = request.form.getlist('color_name[]')
             availables = request.form.getlist('available[]')
@@ -402,38 +403,50 @@ def edit_product(product_id):
             heights = request.form.getlist('product_height[]')
             unit_heights = request.form.getlist('unit_height[]')
 
-            # Delete existing variants associated with this product
-            ProductVariant.query.filter_by(product_id=product_id).delete()
+            # 3. Synchronize Variants
+            num_form_variants = len(color_codes)
+            num_existing_variants = len(existing_variants)
 
-            # Re-add variants from the form data
-            for i in range(len(color_codes)):
-                new_variant = ProductVariant(
-                    product_id=product.product_id,
-                    color_code=color_codes[i],
-                    color_name=color_names[i],
-                    available=int(availables[i]),
-                    product_width=float(widths[i]),
-                    unit_width=unit_widths[i],
-                    product_height=float(heights[i]),
-                    unit_height=unit_heights[i]
-                )
-                db.session.add(new_variant)
+            for i in range(max(num_form_variants, num_existing_variants)):
+                if i < num_form_variants and i < num_existing_variants:
+                    # UPDATE existing variant
+                    v = existing_variants[i]
+                    v.color_code = color_codes[i]
+                    v.color_name = color_names[i]
+                    v.available = int(availables[i])
+                    v.product_width = float(widths[i])
+                    v.unit_width = unit_widths[i]
+                    v.product_height = float(heights[i])
+                    v.unit_height = unit_heights[i]
+                
+                elif i < num_form_variants:
+                    # ADD new variant (form has more than DB)
+                    new_variant = ProductVariant(
+                        product_id=product.product_id,
+                        color_code=color_codes[i],
+                        color_name=color_names[i],
+                        available=int(availables[i]),
+                        product_width=float(widths[i]),
+                        unit_width=unit_widths[i],
+                        product_height=float(heights[i]),
+                        unit_height=unit_heights[i]
+                    )
+                    db.session.add(new_variant)
+                
+                elif i < num_existing_variants:
+                    # DELETE removed variant (DB has more than form)
+                    # Note: This will STILL fail if this specific variant is in a cart.
+                    db.session.delete(existing_variants[i])
 
             db.session.commit()
-            
-            # Refresh data for the template
-            variants = ProductVariant.query.filter_by(product_id=product_id).all()
-            return render_template('edit_product.html', product=product, variants=variants, success="Product updated successfully!")
+            return redirect(url_for('edit_product', product_id=product.product_id))
 
         except Exception as e:
             db.session.rollback()
-            print(f"Error: {e}")
-            variants = ProductVariant.query.filter_by(product_id=product_id).all()
-            return render_template('edit_product.html', product=product, variants=variants, error=f"Update failed: {str(e)}")
+            # If a delete fails here, it's because that specific variant is in a cart
+            return render_template('edit_product.html', product=product, variants=existing_variants, error=f"Update failed: {str(e)}")
 
-    # GET Request Logic
-    variants = ProductVariant.query.filter_by(product_id=product_id).all()
-    return render_template('edit_product.html', product=product, variants=variants)
+    return render_template('edit_product.html', product=product, variants=existing_variants)
 
 @app.route('/delete_variant/<int:variant_id>', methods=['DELETE'])
 def delete_variant(variant_id):
@@ -485,9 +498,29 @@ def add_to_cart(product_id):
 # Displays Cart items
 @app.route('/cart')
 def view_cart():
+    
     cart = db.session.query(Cart).filter_by(owner_id=session['user_id']).first()
     cart_items = CartItem.query.filter_by(cart_id=cart.cart_id).all()
-    return render_template('cart.html', cart=cart, cart_items=cart_items)
+
+    total_price = sum(item.product.price * item.quantity for item in cart_items)
+
+    return render_template('cart.html', cart=cart, cart_items=cart_items, total_price=total_price)
+
+@app.route('/update_cart/<int:cart_item_id>/<action>')
+def update_cart(cart_item_id, action):
+    item = CartItem.query.get_or_404(cart_item_id)
+
+    if action == 'increase':
+        item.quantity += 1
+        db.session.commit()
+    elif action == 'decrease' and item.quantity > 1:
+        item.quantity -= 1
+        db.session.commit()
+    elif action == 'decrease' and item.quantity <= 1:
+        db.session.delete(item)
+        db.session.commit()
+    
+    return redirect('/cart')
 
 @app.route('/request_discount/<int:product_id>', methods=['POST'])
 def request_discount(product_id):

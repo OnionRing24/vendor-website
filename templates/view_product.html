@@ -35,11 +35,14 @@
                     {{variant.color_name}}
                 </button>
 
+                {% if loop.first %}
+                    <input type="hidden" name="user_choice" id="choice_input" value="{{ variant.product_variant_id}}">
+                {% endif %}
+
             {% endfor %}
-            <input name="user_choice" id="choice_input" value="0">
         </div>
 
-        <h2>{{product.price}}</h2>
+        <h2>{{"{:.2f}".format(product.price)}}</h2>
 
         <h3>
             {% if product.rating >= 0 %}
