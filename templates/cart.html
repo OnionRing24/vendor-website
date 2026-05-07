@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block body %}
 
+    <br>
+
     <h1>Cart</h1>
 
     <div class="cart-container">
@@ -30,8 +32,9 @@
     </div>
 
     <br>
-    <br>
-
-    <button href="#">Check Out</button>
+    
+    <a href="/checkout/{{ cart.cart_id }}">
+        checkout
+    </a>
 
 {% endblock %}

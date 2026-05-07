@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block body %}
+
+    <form action="/checkout/{{ cart.cart_id }}" method="POST">
+        <div style="display:flex; gap: 15px;">
+            <div>
+                <h3>Billing Address</h3>
+                <div style="display:flex; gap:15px;">
+                    <input type="text" class="input_field" placeholder="First Name">
+                    <input type="text" class="input_field" placeholder="Last Name">
+                </div>
+                <input type="email" class="input_field" placeholder="Email">
+                <input type="text" class="input_field" placeholder="Address">
+                <div style="display:flex; gap:15px;">
+                    <input type="text" class="input_field" placeholder="City">
+                    <input type="text" class="input_field" placeholder="State">
+                    <input type="text" inputmode="numeric" class="input_field" placeholder="Zip">
+                </div>
+            </div>
+            <div>
+                <h3>Payment</h3>
+                <input type="text" class="input_field" placeholder="Name on Card">
+                <input type="text" inputmode="numeric" class="input_field" placeholder="Card Number">
+                <div style="display:flex; gap:15px;">
+                    <input type="text" class="input_field" placeholder="Expire Month">
+                    <input type="text" class="input_field" placeholder="Expire Year">
+                </div>
+                <input type="text" inputmode="numeric" class="input_field" placeholder="CVV">
+            </div>
+        </div>
+        <br>
+        <div class="field checkbox-field">
+            <label for="agree">
+                <input type="checkbox" id="agree" name="agree" required>
+                I understand that this system is only for testing purposes only, and the data entered here will not be processed, stored, or saved
+            </label>
+        </div>
+        <button type="submit">Check out</button>
+    </form>
+
+{% endblock %}

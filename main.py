@@ -106,7 +106,7 @@ class CartItem(db.Model):
     product = db.relationship('Product', backref='product', lazy=True)
     variant = db.relationship('ProductVariant', backref='variant', lazy=True)
 
-class Order(db.Model):
+class Orders(db.Model):
     __tablename__ = 'orders'
     order_id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey('account.account_id'), nullable=False)
@@ -120,6 +120,7 @@ class OrderItem(db.Model):
     order_item_id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey('orders.order_id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
+    variant_id = db.Column(db.Integer, db.ForeignKey('product_variant.product_variant_id'), nullable=False)
     quantity = db.Column(db.Integer, default=1)
     price_at_purchase = db.Column(db.Float, nullable=False)
     warranty_deadline = db.Column(db.DateTime)
@@ -521,6 +522,53 @@ def update_cart(cart_item_id, action):
         db.session.commit()
     
     return redirect('/cart')
+
+@app.route('/checkout/<int:cart_id>', methods=['GET', 'POST'])
+def checkout(cart_id):
+    cart = Cart.query.get_or_404(cart_id)
+
+    if cart.owner_id != session['user_id']:
+        return redirect('/')
+    
+    if request.method == 'POST':
+        cart_items = CartItem.query.filter_by(cart_id=cart_id).all()
+
+        total_items = sum(1 * item.quantity for item in cart_items)
+        total_amount = sum(item.product.price * item.quantity for item in cart_items)
+
+        new_order = Orders(
+            customer_id = session['user_id'],
+            total_items = total_items,
+            total_amount = total_amount
+        )
+
+        db.session.add(new_order)
+        db.session.commit()
+        
+        for item in cart_items:
+            if item.product.visibility.name == 'public':
+                product_variant = db.session.query(ProductVariant).filter_by(product_variant_id=item.variant_id).first()
+                if product_variant.available > 1:
+                    new_order_items = OrderItem(
+                        order_id = new_order.order_id,
+                        product_id = item.product_id,
+                        variant_id = item.variant_id,
+                        quantity = item.quantity,
+                        price_at_purchase = item.price_at_addition * item.quantity,
+                        warranty_deadline = item.product.warranty_period
+                    )
+                    product_variant.available -= item.quantity
+
+                    db.session.add(new_order_items)
+        
+        clear_items = db.session.query(CartItem).filter_by(cart_id=cart_id).delete()
+        db.session.commit()
+        return redirect(f'/order_placed/{new_order.order_id}')
+    return render_template('payment.html', cart=cart, cart_id=cart_id)
+
+@app.route('/order_placed/<int:order_id>')
+def order_confirmed(order_id):
+    return render_template('order_confirmed.html')
 
 @app.route('/request_discount/<int:product_id>', methods=['POST'])
 def request_discount(product_id):
