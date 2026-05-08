@@ -1,0 +1,72 @@
+<style>
+    .rating-star{
+        color: #e05528;
+    }
+</style>
+{% extends "base.html" %}
+{% block body %}
+
+    <h1>{{order_item.product.name}}</h1>
+    <h2>Status: {{order_item.status.name}}</h2>
+
+    <br>
+    <br>
+
+    {% if session['role'] == 'customer' %}
+        <h2>Make Review</h2>
+
+        <div class="flex-box">    
+            <form id="reviewForm" action="/publish_review/{{order_item.order_item_id}}/order_display">
+                
+                <output id="range">0.5</output>
+                <div id="star-container">
+                    <ion-icon name="star-half-outline" class="rating-star" data-value="1"></ion-icon>
+                    <ion-icon name="star-outline" class="rating-star" data-value="2"></ion-icon>
+                    <ion-icon name="star-outline" class="rating-star" data-value="3"></ion-icon>
+                    <ion-icon name="star-outline" class="rating-star" data-value="4"></ion-icon>
+                    <ion-icon name="star-outline" class="rating-star" data-value="5"></ion-icon>
+                </div>
+                <input type="range" step="0.5" min="0.5" max="5" name="rating" id="ratingRange" value="0.5">
+
+                <br>
+                <br>
+            
+                <textarea name="description" placeholder="Description"></textarea>
+
+                <br>
+                <br>
+
+                <button type="submit">Publish Review</button>
+            </form>
+        </div>
+
+
+    {% endif %}
+    
+    <script>
+        const rangeInput = document.getElementById('ratingRange');
+        const output = document.getElementById('range');
+        const stars = document.querySelectorAll('.rating-star');
+            
+        rangeInput.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            output.textContent = val;
+        
+            stars.forEach((star) => {
+                const starPos = parseFloat(star.getAttribute('data-value'));
+                
+                if (val >= starPos) {
+                    // If the value is higher than or equal to the star position (e.g., 3 >= 1)
+                    star.setAttribute('name', 'star');
+                } else if (val >= starPos - 0.5) {
+                    // If the value is exactly 0.5 below the position (e.g., 2.5 for the 3rd star)
+                    star.setAttribute('name', 'star-half-outline');
+                } else {
+                    // Otherwise, it's empty
+                    star.setAttribute('name', 'star-outline');
+                }
+            });
+        });
+    </script>
+    
+{% endblock %}

@@ -109,6 +109,33 @@
     </div>
 
 
+    <div class="flex-box">    
+        <form id="reviewForm" action="/publish_review/{{order_item.product.product_id}}/product_display">
+            
+            <output id="range">0.5</output>
+            <div id="star-container">
+                <ion-icon name="star-half-outline" class="rating-star" data-value="1"></ion-icon>
+                <ion-icon name="star-outline" class="rating-star" data-value="2"></ion-icon>
+                <ion-icon name="star-outline" class="rating-star" data-value="3"></ion-icon>
+                <ion-icon name="star-outline" class="rating-star" data-value="4"></ion-icon>
+                <ion-icon name="star-outline" class="rating-star" data-value="5"></ion-icon>
+            </div>
+            <input type="range" step="0.5" min="0.5" max="5" name="rating" id="ratingRange" value="0.5">
+
+            <br>
+            <br>
+        
+            <textarea name="description" placeholder="Description"></textarea>
+
+            <br>
+            <br>
+            <button type="submit">Publish Review</button>
+        </form>
+    </div>
+
+
+
+
     <script>
         function setVal(val, btnElement) {
             // Update hidden input value

@@ -67,6 +67,7 @@ class Product(db.Model):
     warranty_period = db.Column(db.DateTime)
     visibility = db.Column(db.Enum(VisibilityEnum), default=VisibilityEnum.private)
     vendor = db.relationship('Account', backref='vendor', lazy=True)
+    variant = db.relationship('ProductVariant', backref='product', lazy=True)
     
     __table_args__ = (CheckConstraint('discount_end > discount_start', name='discount_date_check'),)
 
@@ -114,7 +115,7 @@ class Orders(db.Model):
     total_items = db.Column(db.Integer, default=0)
     total_amount = db.Column(db.Float)
     order_confirmed = db.Column(db.Boolean, default=False)
-    items = db.relationship('OrderItem', backref='order', lazy=True)
+    items = db.relationship('OrderItem', backref='items', lazy=True)
 
 class OrderItem(db.Model):
     order_item_id = db.Column(db.Integer, primary_key=True)
@@ -125,6 +126,8 @@ class OrderItem(db.Model):
     price_at_purchase = db.Column(db.Float, nullable=False)
     warranty_deadline = db.Column(db.DateTime)
     status = db.Column(db.Enum(OrderStatus), default=OrderStatus.pending)
+    product = db.relationship('Product', backref='order_product', lazy=True)
+    variant = db.relationship('ProductVariant', backref='order_variant', lazy=True)
 
 class Review(db.Model):
     review_id = db.Column(db.Integer, primary_key=True)
@@ -466,6 +469,8 @@ def view_product(product_id):
     product = Product.query.get_or_404(product_id)
     variants = ProductVariant.query.filter_by(product_id=product_id).all()
     reviews = Review.query.filter_by(product_id=product_id).all()
+
+    check_review = Review.query.filter_by(product_id=product_id, customer_id=session['user_id']).first()
     return render_template('view_product.html', product=product, variants=variants, reviews=reviews)
 
 @app.route('/add_to_cart/<int:product_id>', methods=['POST'])
@@ -569,6 +574,62 @@ def checkout(cart_id):
 @app.route('/order_placed/<int:order_id>')
 def order_confirmed(order_id):
     return render_template('order_confirmed.html')
+
+from sqlalchemy.orm import joinedload
+
+@app.route('/orders')
+def get_orders():
+    query = Orders.query.options(joinedload(Orders.items))
+
+    if session['role'] == 'customer':
+        orders = query.filter_by(customer_id=session['user_id']).all()
+
+    elif session['role'] == 'vendor':
+        orders = query.join(OrderItem).join(Product)\
+                      .filter(Product.vendor_id == session['user_id']).all()
+        
+    return render_template('orders.html', orders=orders)
+
+@app.route('/view_order/<int:order_item_id>')
+def view_order(order_item_id):
+    order_item = OrderItem.query.get_or_404(order_item_id)
+
+    check_review = Review.query.filter_by(order_item_id=order_item_id, customer_id=session['user_id'])
+
+    if check_review:
+        if order_item.items.customer_id == session['user_id']:
+            return render_template('view_order.html', order_item=order_item, review_preset=check_review)
+
+        else:
+            return redirect('/orders')
+    
+    else:
+        if order_item.items.customer_id == session['user_id']:
+            return render_template('view_order.html', order_item=order_item, review_preset=None)
+        
+        else:
+            return redirect('/orders')
+    
+@app.route('/publish_review/<int:order_item_id>/<action>')
+def publish_review(order_item_id, action):
+    order_check = OrderItem.query.get_or_404(order_item_id)
+    product = Product.query.filter_by(product_id = order_check.product.product_id)
+
+    if order_check:
+        new_review = Review(
+            customer_id = session['user_id'],
+            order_item_id = order_item_id,
+            product_id = product.product_id,
+            rating = request.form['rating'],
+            description = request.form['description']
+        )
+        db.session.add(new_review)
+        db.session.commit()
+    
+    if action == 'order_display':
+        return redirect(f'/view_order/{order_item_id}')
+    elif action == 'product_display':
+        return redirect(f'/view_product/{product.product_id}')
 
 @app.route('/request_discount/<int:product_id>', methods=['POST'])
 def request_discount(product_id):

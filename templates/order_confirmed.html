@@ -1,8 +1,11 @@
 {% extends 'base.html' %}
 {% block body %}
 
-<h1>Order Confirmed</h1>
-<a href="#">View Status</a>
-<a href="#">Continue Shopping</a>
+<div style="display:flex; flex-direction:column; align-items:center; margin:100 auto; width:50%">
+    <h1>Order Confirmed</h1>
+    <a href="/orders">View Orders</a>
+    <a href="#">Make a Review</a>
+    <a href="#">Continue Shopping</a>
+</div>
 
 {% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block body %}
+
+    <br>
+
+    <h1>Orders</h1>
+
+    <div class="flex-box" style="max-width:1140; margin-left: auto; margin-right: auto; margin-bottom: 100px;">
+    {% for order in orders %}
+        {% for item in order.items %}
+            <div class="product">
+                <ul>
+                    <li>
+                        <h1>{{item.product.name}}</h1>
+                    </li>
+                    <li>
+                        <h2>${{"{:.2f}".format(item.price_at_purchase)}}</h2>
+                    </li>
+                    <li>
+                        <p>{{item.variant.color_name}}</p>
+                    </li>
+                    <li>
+                        {{item.quantity}}
+                    </li>
+
+                    <a href="/view_order/{{item.order_id}}">View Items</a>
+                </ul>
+            </div>
+        {% endfor %}
+    {% endfor %}
+    </div>
+
+{% endblock %}

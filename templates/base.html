@@ -22,12 +22,12 @@
                         {% if session.get('role') == 'vendor' %}
                         <li><a href='/vendor'>Vendor Dashboard</a></li>
                         <li><a href='/products'>Products</a></li>
-                        <li><a href='#'>Orders</a></li>
+                        <li><a href='/orders'>Orders</a></li>
                     {% endif %}
 
                     {% if session.get('role') == 'customer' %}                        <li><a href='#'>Dashboard</a></li>
                         <li><a href='/products'>Browse</a></li>
-                        <li><a href='#'>Orders</a></li>
+                        <li><a href='/orders'>Orders</a></li>
                         <li><a href='#'>Claims</a></li>
                         <li><a href='/cart'>Cart</a></li>
                     {% endif %}
@@ -44,4 +44,6 @@
 
         <footer></footer>
     </body>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </html>
