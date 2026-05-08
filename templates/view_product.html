@@ -110,7 +110,7 @@
 
 
     <div class="flex-box">    
-        <form id="reviewForm" action="/publish_review/{{order_item.product.product_id}}/product_display">
+        <form id="reviewForm" action="/publish_review/{{product.product_id}}/product_display">
             
             <output id="range">0.5</output>
             <div id="star-container">
@@ -131,6 +131,12 @@
             <br>
             <button type="submit">Publish Review</button>
         </form>
+    </div>
+
+    <div class="product_display">
+        {% for review in reviews %}
+            <p>{{ review.description }}</p>
+        {% endfor %}
     </div>
 
 

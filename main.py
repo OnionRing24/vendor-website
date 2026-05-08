@@ -470,7 +470,6 @@ def view_product(product_id):
     variants = ProductVariant.query.filter_by(product_id=product_id).all()
     reviews = Review.query.filter_by(product_id=product_id).all()
 
-    check_review = Review.query.filter_by(product_id=product_id, customer_id=session['user_id']).first()
     return render_template('view_product.html', product=product, variants=variants, reviews=reviews)
 
 @app.route('/add_to_cart/<int:product_id>', methods=['POST'])
@@ -610,18 +609,18 @@ def view_order(order_item_id):
         else:
             return redirect('/orders')
     
-@app.route('/publish_review/<int:order_item_id>/<action>')
+@app.route('/publish_review/<int:order_item_id>/<action>', methods=['POST'])
 def publish_review(order_item_id, action):
     order_check = OrderItem.query.get_or_404(order_item_id)
-    product = Product.query.filter_by(product_id = order_check.product.product_id)
+    product_tempoary = Product.query.filter_by(product_id = order_check.product.product_id).first()
 
     if order_check:
         new_review = Review(
             customer_id = session['user_id'],
             order_item_id = order_item_id,
-            product_id = product.product_id,
-            rating = request.form['rating'],
-            description = request.form['description']
+            product_id = product_tempoary.product_id,
+            rating = float(request.form.get('rating')),
+            description = str(request.form.get('description'))
         )
         db.session.add(new_review)
         db.session.commit()
@@ -629,7 +628,7 @@ def publish_review(order_item_id, action):
     if action == 'order_display':
         return redirect(f'/view_order/{order_item_id}')
     elif action == 'product_display':
-        return redirect(f'/view_product/{product.product_id}')
+        return redirect(f'/view_product/{product_tempoary.product_id}')
 
 @app.route('/request_discount/<int:product_id>', methods=['POST'])
 def request_discount(product_id):
