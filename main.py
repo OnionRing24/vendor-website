@@ -330,6 +330,13 @@ def get_products(page=1):
     paginated = db.session.query(Product).paginate(page=page, per_page=per_page, error_out=False)
     products = paginated.items
 
+    for product in products:
+        avg = db.session.query(func.avg(Review.rating)).filter(Review.product_id == product.product_id).scalar()
+        product.avg_review = avg if avg else 0
+        
+        count = db.session.query(func.count(Review.review_id)).filter(Review.product_id == product.product_id).scalar()
+        product.review_count = count if count else 0
+
     print(products)
     return render_template('products.html', products=products, page=page, per_page=per_page)
 
@@ -379,6 +386,13 @@ def my_products(page=1):
     # Displays all products made by the vendor
     paginated = db.session.query(Product).filter_by(vendor_id=account_id).paginate(page=page, per_page=per_page, error_out=False)
     products = paginated.items
+
+    for product in products:
+        avg = db.session.query(func.avg(Review.rating)).filter(Review.product_id == product.product_id).scalar()
+        product.avg_review = avg if avg else 0
+        
+        count = db.session.query(func.count(Review.review_id)).filter(Review.product_id == product.product_id).scalar()
+        product.review_count = count if count else 0
 
     print(products)
     return render_template('manage_product.html', products=products, page=page, per_page=per_page)
@@ -472,6 +486,10 @@ def view_product(product_id):
     variants = ProductVariant.query.filter_by(product_id=product_id).all()
     reviews = Review.query.filter_by(product_id=product_id).all()
     query = Orders.query.options(joinedload(Orders.items))
+    avg_review = db.session.query(func.avg(Review.rating)).filter(Review.product_id==product_id).scalar()
+
+    count = db.session.query(func.count(Review.review_id)).filter(Review.product_id == product.product_id).scalar()
+    product.review_count = count if count else 0
 
     if session['role'] == 'customer':
         orders = query.filter_by(customer_id=session['user_id']).all()
@@ -480,7 +498,7 @@ def view_product(product_id):
         orders = query.join(OrderItem).join(Product)\
                       .filter(Product.vendor_id == session['user_id']).all()
 
-    return render_template('view_product.html', product=product, variants=variants, reviews=reviews, orders=orders)
+    return render_template('view_product.html', product=product, variants=variants, reviews=reviews, orders=orders, avg_review=avg_review)
 
 @app.route('/add_to_cart/<int:product_id>', methods=['POST'])
 def add_to_cart(product_id):

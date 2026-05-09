@@ -42,27 +42,27 @@
             {% endfor %}
         </div>
 
-        <h2>{{"{:.2f}".format(product.price)}}</h2>
-
-        <h3>
+        <h2>
             <div id="star-container">
-                {% if product.rating == 0 %}
+                {% if avg_review == 0 %}
                     <h3>No Reviews</h3>
                 {% else %}
                 
                     {% for i in range(1, 6) %}
-                        {% if i <= product.rating %}
+                        {% if i <= avg_review %}
                             <ion-icon name="star" class="rating-star"></ion-icon>
-                        {% elif i - 0.5 == product.rating or (i > product.rating and i-1 < product.rating) %}
+                        {% elif i - 0.5 == avg_review or (i > avg_review and i-1 < avg_review) %}
                             <ion-icon name="star-half-outline" class="rating-star"></ion-icon>
                         {% else %}
                             <ion-icon name="star-outline" class="rating-star"></ion-icon>
                         {% endif %}
                     {% endfor %}
-
+                    <span style="font-size:25px">({{ product.review_count }})</span>
                 {% endif %}
             </div>
-        </h3>
+        </h2>
+
+        <h2>{{"{:.2f}".format(product.price)}}</h2>
 
         {% if session['role'] == 'customer' %}
             <br>
@@ -78,11 +78,13 @@
             
             <output id="range">0.5</output>
             <div id="star-container">
+                <h3>
                 <ion-icon name="star-half-outline" class="rating-star" data-value="1"></ion-icon>
                 <ion-icon name="star-outline" class="rating-star" data-value="2"></ion-icon>
                 <ion-icon name="star-outline" class="rating-star" data-value="3"></ion-icon>
                 <ion-icon name="star-outline" class="rating-star" data-value="4"></ion-icon>
                 <ion-icon name="star-outline" class="rating-star" data-value="5"></ion-icon>
+                </h3>
             </div>
             <input type="range" step="0.5" min="0.5" max="5" name="rating" id="ratingRange" value="0.5">
 
@@ -101,25 +103,27 @@
 {% endif %}
     <br>
 
-    <div class="review-container">
-        {% for review in reviews %}
-            <div id="star-container">
-                {% for i in range(1, 6) %}
-                    {% if i <= review.rating %}
-                        <ion-icon name="star" class="star"></ion-icon>
-                    {% elif i - 0.5 == review.rating or (i > review.rating and i-1 < review.rating) %}
-                        <ion-icon name="star-half-outline" class="star"></ion-icon>
-                    {% else %}
-                        <ion-icon name="star-outline" class="star"></ion-icon>
-                    {% endif %}
-                {% endfor %}
-            </div>
-            <button class="select-btn" style="cursor: default; height: 32px; background-color: {{review.review_order.variant.color_code}}" disabled>
-                <h3 style="font-size: 15px;">{{ review.review_order.variant.color_name }}</h3>
-            </button>
-            <h3>{{ review.customer.username }}</h3>
-            <p>{{ review.description }}</p>
-        {% endfor %}
+    <div style=" display:flex; flex-direction:column; margin: 0 auto">
+        <div class="product" style="width:25%">
+            {% for review in reviews %}
+                <div id="star-container">
+                    {% for i in range(1, 6) %}
+                        {% if i <= review.rating %}
+                            <ion-icon name="star" class="star"></ion-icon>
+                        {% elif i - 0.5 == review.rating or (i > review.rating and i-1 < review.rating) %}
+                            <ion-icon name="star-half-outline" class="star"></ion-icon>
+                        {% else %}
+                            <ion-icon name="star-outline" class="star"></ion-icon>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <h3>{{ review.customer.username }}</h3>
+                <button class="select-btn" style="cursor: default; height: 30px; background-color: {{review.review_order.variant.color_code}}" disabled>
+                    <h3 style="font-size: 12px;">{{ review.review_order.variant.color_name }}</h3>
+                </button>
+                <p>{{ review.description }}</p>
+            {% endfor %}
+        </div>
     </div>
 
 

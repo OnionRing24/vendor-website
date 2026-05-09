@@ -13,18 +13,20 @@
     <br>
 
     {% if session['role'] == 'customer' %}
-        <h2>Make Review</h2>
+        <h2>Make a Review</h2>
 
         <div class="flex-box">    
             <form id="reviewForm" action="/publish_review/{{order_item.order_item_id}}/order_display" method="POST">
                 
                 <output id="range">0.5</output>
                 <div id="star-container">
+                    <h3>
                     <ion-icon name="star-half-outline" class="rating-star" data-value="1"></ion-icon>
                     <ion-icon name="star-outline" class="rating-star" data-value="2"></ion-icon>
                     <ion-icon name="star-outline" class="rating-star" data-value="3"></ion-icon>
                     <ion-icon name="star-outline" class="rating-star" data-value="4"></ion-icon>
                     <ion-icon name="star-outline" class="rating-star" data-value="5"></ion-icon>
+                    </h3>
                 </div>
                 <input type="range" step="0.5" min="0.5" max="5" name="rating" id="ratingRange" value="0.5">
 
@@ -39,8 +41,6 @@
                 <button type="submit">Publish Review</button>
             </form>
         </div>
-
-
     {% endif %}
     
     <script>
