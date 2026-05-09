@@ -134,8 +134,10 @@ class Review(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey('account.account_id'), nullable=False)
     order_item_id = db.Column(db.Integer, db.ForeignKey('order_item.order_item_id'))
     product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
-    rating = db.Column(db.Integer)
+    rating = db.Column(db.Float)
     description = db.Column(db.Text)
+    customer = db.relationship('Account', backref='review', lazy=True)
+    review_order = db.relationship('OrderItem', backref='review', lazy=True)
     
     __table_args__ = (CheckConstraint('rating >= 1 AND rating <= 5', name='valid_rating'),)
 
@@ -469,8 +471,16 @@ def view_product(product_id):
     product = Product.query.get_or_404(product_id)
     variants = ProductVariant.query.filter_by(product_id=product_id).all()
     reviews = Review.query.filter_by(product_id=product_id).all()
+    query = Orders.query.options(joinedload(Orders.items))
 
-    return render_template('view_product.html', product=product, variants=variants, reviews=reviews)
+    if session['role'] == 'customer':
+        orders = query.filter_by(customer_id=session['user_id']).all()
+
+    elif session['role'] == 'vendor':
+        orders = query.join(OrderItem).join(Product)\
+                      .filter(Product.vendor_id == session['user_id']).all()
+
+    return render_template('view_product.html', product=product, variants=variants, reviews=reviews, orders=orders)
 
 @app.route('/add_to_cart/<int:product_id>', methods=['POST'])
 def add_to_cart(product_id):
