@@ -28,7 +28,7 @@ class OrderStatus(enum.Enum):
     handed_to_delivery_partner = "handed_to_delivery_partner"
     shipped = "shipped"
     completed = "completed"
-    cancelled = "cancelled"
+    cancelled = "canceled"
 
 class ClaimStatus(enum.Enum):
     pending = "pending"
@@ -650,6 +650,36 @@ def publish_review(order_item_id, action):
         return redirect(f'/view_order/{order_item_id}')
     elif action == 'product_display':
         return redirect(f'/view_product/{product_tempoary.product_id}')
+
+@app.route('/update_order/<int:order_item_id>', methods=['POST'])
+def update_order(order_item_id):
+    order_item = OrderItem.query.get_or_404(order_item_id)
+    product_variant = ProductVariant.query.filter_by(product_variant_id = order_item.variant_id).first()
+
+    if session.get('role') != 'vendor':
+        return redirect('/orders')
+
+    action = request.form.get("submit_button")
+
+    if action == 'reject' or action == 'cancel':
+        if product_variant:
+            product_variant.available += order_item.quantity
+        order_item.status = OrderStatus.cancelled 
+    
+    elif action == 'confirm':
+        order_item.status = OrderStatus.confirmed
+
+    elif action == 'advance':
+        if order_item.status == OrderStatus.confirmed:
+            order_item.status = OrderStatus.handed_to_delivery_partner
+        elif order_item.status == OrderStatus.handed_to_delivery_partner:
+            order_item.status = OrderStatus.shipped
+        elif order_item.status == OrderStatus.shipped:
+            order_item.status = OrderStatus.completed
+    
+    db.session.commit()
+    return redirect(f'/view_order/{order_item_id}')
+
 
 @app.route('/request_discount/<int:product_id>', methods=['POST'])
 def request_discount(product_id):
