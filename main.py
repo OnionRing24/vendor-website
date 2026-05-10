@@ -625,6 +625,9 @@ def view_order(order_item_id):
     if order_item.order.customer_id == session['user_id']:
         return render_template('view_order.html', order_item=order_item)
     
+    elif order_item.product.vendor_id == session['user_id']:
+        return render_template('view_order.html', order_item=order_item)
+    
     return redirect('/orders')
     
 @app.route('/publish_review/<int:order_item_id>/<action>', methods=['POST'])

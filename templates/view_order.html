@@ -62,7 +62,21 @@
             </form>
         </div>
     {% endif %}
+
+    {% elif session["role"] == 'vendor' %}
+    
+    <h2>{{order_item.status.name}}</h1>
+    {% if order_item.status.name == 'pending' %}
+        <button>Confirm</button>
+        <button>Reject</button>
+    {% else %}
+        <button>Advance</button>
+        <button>Cancel</button>
     {% endif %}
+
+    {% endif %}
+    
+
     
     <script>
         const rangeInput = document.getElementById('ratingRange');
