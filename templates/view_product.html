@@ -103,9 +103,9 @@
 {% endif %}
     <br>
 
-    <div style=" display:flex; flex-direction:column; margin: 0 auto">
-        <div class="product" style="width:25%">
-            {% for review in reviews %}
+    <div style=" display:flex; margin: 0 auto">
+        {% for review in reviews %}
+            <div class="product" style="width:25%">
                 <div id="star-container">
                     {% for i in range(1, 6) %}
                         {% if i <= review.rating %}
@@ -122,8 +122,8 @@
                     <h3 style="font-size: 12px;">{{ review.review_order.variant.color_name }}</h3>
                 </button>
                 <p>{{ review.description }}</p>
-            {% endfor %}
-        </div>
+            </div>
+        {% endfor %}
     </div>
 
 
