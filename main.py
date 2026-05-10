@@ -115,7 +115,7 @@ class Orders(db.Model):
     total_items = db.Column(db.Integer, default=0)
     total_amount = db.Column(db.Float)
     order_confirmed = db.Column(db.Boolean, default=False)
-    items = db.relationship('OrderItem', backref='items', lazy=True)
+    items = db.relationship('OrderItem', backref='order', lazy=True)
 
 class OrderItem(db.Model):
     order_item_id = db.Column(db.Integer, primary_key=True)
@@ -128,15 +128,16 @@ class OrderItem(db.Model):
     status = db.Column(db.Enum(OrderStatus), default=OrderStatus.pending)
     product = db.relationship('Product', backref='order_product', lazy=True)
     variant = db.relationship('ProductVariant', backref='order_variant', lazy=True)
+    order_review = db.relationship('Review', backref='order_item', uselist=False)
 
 class Review(db.Model):
     review_id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey('account.account_id'), nullable=False)
-    order_item_id = db.Column(db.Integer, db.ForeignKey('order_item.order_item_id'))
+    order_item_id = db.Column(db.Integer, db.ForeignKey('order_item.order_item_id'), unique=True)
     product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
     rating = db.Column(db.Float)
     description = db.Column(db.Text)
-    customer = db.relationship('Account', backref='review', lazy=True)
+    customer = db.relationship('Account', backref='reviews', lazy=True)
     review_order = db.relationship('OrderItem', backref='review', lazy=True)
     
     __table_args__ = (CheckConstraint('rating >= 1 AND rating <= 5', name='valid_rating'),)
@@ -621,21 +622,10 @@ def get_orders():
 def view_order(order_item_id):
     order_item = OrderItem.query.get_or_404(order_item_id)
 
-    check_review = Review.query.filter_by(order_item_id=order_item_id, customer_id=session['user_id'])
-
-    if check_review:
-        if order_item.items.customer_id == session['user_id']:
-            return render_template('view_order.html', order_item=order_item, review_preset=check_review)
-
-        else:
-            return redirect('/orders')
+    if order_item.order.customer_id == session['user_id']:
+        return render_template('view_order.html', order_item=order_item)
     
-    else:
-        if order_item.items.customer_id == session['user_id']:
-            return render_template('view_order.html', order_item=order_item, review_preset=None)
-        
-        else:
-            return redirect('/orders')
+    return redirect('/orders')
     
 @app.route('/publish_review/<int:order_item_id>/<action>', methods=['POST'])
 def publish_review(order_item_id, action):
