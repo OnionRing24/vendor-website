@@ -11,6 +11,12 @@
     <h2>Status: {{order_item.status.name}}</h2>
 
     <br>
+
+    {% if order_item.status.name == 'completed' %}
+        <h4><a href="#">Write a complaint</a></h4>
+    {% endif %}
+
+    <br>
     <br>
 
     {% if session['role'] == 'customer' %}
@@ -70,6 +76,8 @@
         {% if order_item.status.name == 'pending' %}
             <button type="submit" name="submit_button" value="confirm">Confirm</button>
             <button type="submit" name="submit_button" value="reject">Reject</button>
+        {% elif order_item.status.name == 'completed' %}
+        {% elif order_item.status.name == 'cancelled' %}
         {% else %}
             <button type="submit" name="submit_button" value="advance">Advance</button>
             <button type="submit" name="submit_button" value="cancel">Cancel</button>

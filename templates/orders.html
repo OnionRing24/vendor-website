@@ -20,7 +20,10 @@
                         <p>{{item.variant.color_name}}</p>
                     </li>
                     <li>
-                        {{item.quantity}}
+                        Amount: {{item.quantity}}
+                    </li>
+                    <li>
+                        Status: {{item.status.name}}
                     </li>
 
                     <a href="/view_order/{{item.order_item_id}}">View Items</a>
