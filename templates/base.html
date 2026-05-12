@@ -18,14 +18,15 @@
                 {% endif %}
             </ul>
 
-                    {% if session.get('username') %}                <ul>
-                        {% if session.get('role') == 'vendor' %}
+                    {% if session.get('username') %}
+                    <ul>
+                    {% if session.get('role') == 'vendor' %}
                         <li><a href='/vendor'>Vendor Dashboard</a></li>
                         <li><a href='/products'>Products</a></li>
                         <li><a href='/orders'>Orders</a></li>
                     {% endif %}
 
-                    {% if session.get('role') == 'customer' %}                        <li><a href='#'>Dashboard</a></li>
+                    {% if session.get('role') == 'customer' %}
                         <li><a href='/products'>Browse</a></li>
                         <li><a href='/orders'>Orders</a></li>
                         <li><a href='/cart'>Cart</a></li>
