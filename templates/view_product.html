@@ -83,8 +83,9 @@
 
     <h1>Reviews</h1>
 {% if session['role'] == 'customer' %}
+    {% if completed_order_item and not completed_order_item.order_review %}
     <div class="flex-box">    
-        <form id="reviewForm" action="/publish_review/{{orders.order_item_id}}/product_display" method="POST">
+        <form id="reviewForm" action="/publish_review/{{completed_order_item.order_item_id}}/product_display" method="POST">
             
             <output id="range">0.5</output>
             <div id="star-container">
@@ -108,12 +109,15 @@
             <button type="submit">Publish Review</button>
         </form>
     </div>
+    {% elif not completed_order_item %}
+    <p style="color: #666; font-style: italic;">You must purchase and receive this product to write a review.</p>
+    {% endif %}
 
     <br>
 {% endif %}
     <br>
 
-    <div style=" display:flex; margin: 0 auto">
+    <div style=" display:flex; margin: 0 auto; flex-wrap: wrap;">
         {% for review in reviews %}
             <div class="product" style="width:25%">
                 <div id="star-container">
@@ -128,9 +132,11 @@
                     {% endfor %}
                 </div>
                 <h3>{{ review.customer.username }}</h3>
+                {% if review.review_order and review.review_order.variant %}
                 <button class="select-btn" style="cursor: default; height: 30px; background-color: {{review.review_order.variant.color_code}}" disabled>
                     <h3 style="font-size: 12px;">{{ review.review_order.variant.color_name }}</h3>
                 </button>
+                {% endif %}
                 <p>{{ review.description }}</p>
             </div>
         {% endfor %}
