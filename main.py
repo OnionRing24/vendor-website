@@ -122,11 +122,13 @@ class OrderItem(db.Model):
     order_item_id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey('orders.order_id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
+    variant_id = db.Column(db.Integer, db.ForeignKey('product_variant.product_variant_id'), nullable=False)
     quantity = db.Column(db.Integer, default=1)
     price_at_purchase = db.Column(db.Float, nullable=False)
     warranty_deadline = db.Column(db.DateTime)
     status = db.Column(db.Enum(OrderStatus), default=OrderStatus.pending)
     product = db.relationship('Product', backref='order_product', lazy=True)
+    variant = db.relationship('ProductVariant', backref='order_variant', lazy=True)
     order_review = db.relationship('Review', backref='order_item', uselist=False)
 
 class Review(db.Model):
@@ -538,15 +540,16 @@ def view_product(product_id):
     count = db.session.query(func.count(Review.review_id)).filter(Review.product_id == product.product_id).scalar()
     product.review_count = count if count else 0
 
-    orders = []
+    completed_order_item = None
     if session['role'] == 'customer':
-        orders = Orders.query.filter_by(customer_id=session['user_id']).all()
+        # Find if customer has a completed order for this product
+        completed_order_item = OrderItem.query.filter(
+            OrderItem.product_id == product_id,
+            OrderItem.status == OrderStatus.completed,
+            OrderItem.order.has(Orders.customer_id == session['user_id'])
+        ).first()
 
-    elif session['role'] == 'vendor':
-        orders = db.session.query(Orders).join(OrderItem).join(Product)\
-                      .filter(Product.vendor_id == session['user_id']).distinct().all()
-
-    return render_template('view_product.html', product=product, variants=variants, reviews=reviews, orders=orders, avg_review=avg_review)
+    return render_template('view_product.html', product=product, variants=variants, reviews=reviews, completed_order_item=completed_order_item, avg_review=avg_review)
 
 @app.route('/add_to_cart/<int:product_id>', methods=['POST'])
 def add_to_cart(product_id):
@@ -653,11 +656,16 @@ def order_confirmed(order_id):
 @app.route('/orders')
 def get_orders():
     if session['role'] == 'customer':
-        orders = Orders.query.filter_by(customer_id=session['user_id']).all()
+        orders = Orders.query.filter_by(customer_id=session['user_id']).order_by(Orders.order_date.desc()).all()
 
     elif session['role'] == 'vendor':
-        orders = db.session.query(Orders).join(OrderItem).join(Product)\
-                      .filter(Product.vendor_id == session['user_id']).distinct().all()
+        # Get all OrderItems for this vendor's products
+        vendor_order_items = db.session.query(OrderItem).join(Product)\
+                              .filter(Product.vendor_id == session['user_id']).all()
+        
+        # Get unique Orders from those items
+        order_ids = set(item.order_id for item in vendor_order_items)
+        orders = Orders.query.filter(Orders.order_id.in_(order_ids)).order_by(Orders.order_date.desc()).all()
     
     return render_template('orders.html', orders=orders)
 

@@ -3,37 +3,79 @@
 
     <br>
 
-    <h1>Orders</h1>
+    {% if session['role'] == 'customer' %}
+        <h1>Your Orders</h1>
+        {% set empty_message = "You haven't placed any orders yet." %}
+        {% set browse_link = "/products" %}
+        {% set browse_text = "Start shopping now!" %}
+    {% else %}
+        <h1>Customer Orders</h1>
+        {% set empty_message = "You don't have any orders from customers yet." %}
+        {% set browse_link = "/manage_product" %}
+        {% set browse_text = "Manage your products" %}
+    {% endif %}
 
-    <div class="flex-box" style="max-width:1140; margin-left: auto; margin-right: auto; margin-bottom: 100px;">
-    {% for order in orders %}
-        {% for item in order.items %}
-            <div class="product">
-                <ul>
-                    <li>
-                        <h1>{{item.product.name}}</h1>
-                    </li>
-                    <li>
-                        <h2>${{"{:.2f}".format(item.price_at_purchase)}}</h2>
-                    </li>
-                    <li>
-                        <p>{{item.variant.color_name}}</p>
-                    </li>
-                    <li>
-                        Amount: {{item.quantity}}
-                    </li>
-                    <li>
-                        Status: {{item.status.name}}
-                    </li>
-
-                    <a href="/view_order/{{item.order_item_id}}">View Items</a>
-                    {% if item.status.name == 'completed' %}
-                        <a href="/file_claim/{{item.order_item_id}}">File a Claim</a>
+    {% if orders %}
+    <div style="max-width:1140px; margin-left: auto; margin-right: auto; margin-bottom: 100px;">
+        {% for order in orders %}
+        <div style="border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 8px; background-color: #f9f9f9;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+                <div>
+                    <h3 style="margin: 0; color: #333;">Order #{{order.order_id}}</h3>
+                    <p style="margin: 5px 0; color: #666; font-size: 14px;">Ordered on {{order.order_date.strftime('%B %d, %Y at %I:%M %p')}}</p>
+                    {% if session['role'] == 'vendor' %}
+                    <p style="margin: 5px 0; color: #666; font-size: 14px;">Customer Order ID</p>
                     {% endif %}
-                </ul>
+                </div>
+                <div style="text-align: right;">
+                    <p style="margin: 0; color: #333;"><strong>Total: ${"{:.2f}".format(order.total_amount)}</strong></p>
+                    <p style="margin: 5px 0; color: #999; font-size: 14px;">{{order.total_items}} item(s)</p>
+                </div>
             </div>
+
+            <div class="flex-box" style="gap: 15px;">
+            {% for item in order.items %}
+                {% if session['role'] == 'customer' or item.product.vendor_id == session['user_id'] %}
+                <div class="product" style="flex: 1; min-width: 250px;">
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        <li style="margin-bottom: 10px;">
+                            <h4 style="margin: 0;">{{item.product.name}}</h4>
+                        </li>
+                        <li style="margin-bottom: 8px;">
+                            <strong style="color: #2c7a2c;">${"{:.2f}".format(item.price_at_purchase)}}</strong>
+                        </li>
+                        <li style="margin-bottom: 8px; color: #666;">
+                            <strong>Color:</strong> {{item.variant.color_name if item.variant else 'N/A'}}
+                        </li>
+                        <li style="margin-bottom: 8px; color: #666;">
+                            <strong>Quantity:</strong> {{item.quantity}}
+                        </li>
+                        <li style="margin-bottom: 15px; color: #666;">
+                            <strong>Status:</strong> 
+                            <span style="display: inline-block; padding: 4px 8px; border-radius: 4px; background-color: #e8e8e8; color: #333; font-size: 12px;">
+                                {{item.status.name.replace('_', ' ').title()}}
+                            </span>
+                        </li>
+
+                        <div style="display: flex; gap: 10px;">
+                            <a href="/view_order/{{item.order_item_id}}" style="display: inline-block; padding: 8px 12px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">View Details</a>
+                            {% if session['role'] == 'customer' and item.status.name == 'completed' %}
+                                <a href="/file_claim/{{item.order_item_id}}" style="display: inline-block; padding: 8px 12px; background-color: #ffc107; color: black; text-decoration: none; border-radius: 4px; font-size: 14px;">File a Claim</a>
+                            {% endif %}
+                        </div>
+                    </ul>
+                </div>
+                {% endif %}
+            {% endfor %}
+            </div>
+        </div>
         {% endfor %}
-    {% endfor %}
     </div>
+    {% else %}
+    <div style="max-width:1140px; margin-left: auto; margin-right: auto; text-align: center; padding: 40px 20px;">
+        <p style="font-size: 16px; color: #666;">{{ empty_message }}</p>
+        <p style="color: #999;"><a href="{{ browse_link }}" style="color: #007bff; text-decoration: none;">{{ browse_text }}</a></p>
+    </div>
+    {% endif %}
 
 {% endblock %}
