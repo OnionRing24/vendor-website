@@ -536,20 +536,22 @@ def view_product(product_id):
     reviews = Review.query.filter_by(product_id=product_id).all()
     avg_review = db.session.query(func.avg(Review.rating)).filter(Review.product_id==product_id).scalar()
     avg_review = avg_review if avg_review else 0
+    if reviews:
 
-    count = db.session.query(func.count(Review.review_id)).filter(Review.product_id == product.product_id).scalar()
-    product.review_count = count if count else 0
+        count = db.session.query(func.count(Review.review_id)).filter(Review.product_id == product.product_id).scalar()
+        product.review_count = count if count else 0
 
-    completed_order_item = None
-    if session['role'] == 'customer':
-        # Find if customer has a completed order for this product
-        completed_order_item = OrderItem.query.filter(
-            OrderItem.product_id == product_id,
-            OrderItem.status == OrderStatus.completed,
-            OrderItem.order.has(Orders.customer_id == session['user_id'])
-        ).first()
+        completed_order_item = None
+        if session['role'] == 'customer':
+            # Find if customer has a completed order for this product
+            completed_order_item = OrderItem.query.filter(
+                OrderItem.product_id == product_id,
+                OrderItem.status == OrderStatus.completed,
+                OrderItem.order.has(Orders.customer_id == session['user_id'])
+            ).first()
 
-    return render_template('view_product.html', product=product, variants=variants, reviews=reviews, completed_order_item=completed_order_item, avg_review=avg_review)
+        return render_template('view_product.html', product=product, variants=variants, reviews=reviews, completed_order_item=completed_order_item, avg_review=avg_review)
+    return render_template('view_product.html', product=product, variants=variants, reviews=reviews, completed_order_item=None, avg_review=avg_review)
 
 @app.route('/add_to_cart/<int:product_id>', methods=['POST'])
 def add_to_cart(product_id):
