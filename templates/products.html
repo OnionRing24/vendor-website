@@ -16,12 +16,13 @@
                                 </li>
                             {% endif %}
                             <li><h1>{{product.name}}</h1></li>
+                            {% if product.is_discount == 1 %}
+                                <li><p><s>{{"{:.2f}".format(product.original_price)}}</s></p></li>
+                            {% endif %}
                             <li><h2>${{"{:.2f}".format(product.price)}}</h2></li>
                             <li><p>{{product.vendor.username}}</p></li>
                             <li>
                                 <div class="product-card">
-                                    <h3>{{ product.name }}</h3>
-
                                     <div id="star-container">
                                         {% if product.avg_review == 0 %}
                                             <span>No Reviews</span>

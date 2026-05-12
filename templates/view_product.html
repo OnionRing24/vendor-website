@@ -71,13 +71,16 @@
                 {% endif %}
             </div>
         </h2>
-
+        {% if product.is_discount == 1 %}
+            <s>{{"{:.2f}".format(product.original_price)}}</s>
+        {% endif %}
         <h2>{{"{:.2f}".format(product.price)}}</h2>
 
         {% if session['role'] == 'customer' %}
             <br>
             <button type="submit">Add to Cart</button>
         {% endif %}
+        <p>{{product.description}}</p>
         </form>
     </div>
 
