@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block body %}
+
+    <div class="page">
+        <h1>File a Claim</h1>
+        <h2>{{ item.product.name }}</h2>
+
+        {% if error %}
+            <div class="msg msg-error">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        {% if claim %}
+            <div class="card">
+                <h3>Claim Status: {{ claim.status.name }}</h3>
+                <p><strong>Claim Type:</strong> {{ claim.claim_type }}</p>
+                <p><strong>Reason:</strong> {{ claim.reason }}</p>
+                <p class="msg">Your claim has been filed and is being reviewed.</p>
+            </div>
+        {% else %}
+            <form method="POST" action="/file_claim/{{ item.order_item_id }}">
+                <div class="card">
+                    <label for="claim_type">Claim Type:</label>
+                    <select name="claim_type" id="claim_type" required>
+                        <option value="">Select a claim type</option>
+                        <option value="return">Return</option>
+                        <option value="warranty">Warranty</option>
+                    </select>
+
+                    <label for="reason">Reason:</label>
+                    <textarea name="reason" id="reason" placeholder="Please explain your claim reason" required></textarea>
+
+                    <button type="submit" class="dc-btn">Submit Claim</button>
+                </div>
+            </form>
+        {% endif %}
+    </div>
+
+{% endblock %}

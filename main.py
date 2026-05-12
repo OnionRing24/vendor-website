@@ -84,6 +84,7 @@ class ProductVariant(db.Model):
     unit_height = db.Column(db.String(10))
     
     available = db.Column(db.Integer, nullable=False, default=0)
+    images = db.relationship('ProductImage', backref='variant_images', lazy=True, cascade="all, delete-orphan")
 
 class ProductImage(db.Model):
     product_image_id = db.Column(db.Integer, primary_key=True)
@@ -121,13 +122,11 @@ class OrderItem(db.Model):
     order_item_id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey('orders.order_id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
-    variant_id = db.Column(db.Integer, db.ForeignKey('product_variant.product_variant_id'), nullable=False)
     quantity = db.Column(db.Integer, default=1)
     price_at_purchase = db.Column(db.Float, nullable=False)
     warranty_deadline = db.Column(db.DateTime)
     status = db.Column(db.Enum(OrderStatus), default=OrderStatus.pending)
     product = db.relationship('Product', backref='order_product', lazy=True)
-    variant = db.relationship('ProductVariant', backref='order_variant', lazy=True)
     order_review = db.relationship('Review', backref='order_item', uselist=False)
 
 class Review(db.Model):
@@ -332,6 +331,9 @@ def get_products(page=1):
     products = paginated.items
 
     for product in products:
+        # Load product variants and their images
+        product.variants = ProductVariant.query.filter_by(product_id=product.product_id).all()
+        
         avg = db.session.query(func.avg(Review.rating)).filter(Review.product_id == product.product_id).scalar()
         product.avg_review = avg if avg else 0
         
@@ -370,6 +372,18 @@ def add_product():
         )
         db.session.add(new_variant)
         db.session.commit()
+
+        # Handle image for the first variant
+        image_url = request.form.get('image_url', '').strip()
+        if image_url:
+            new_image = ProductImage(
+                product_id=product.product_id,
+                product_variant_id=new_variant.product_variant_id,
+                image_link=image_url
+            )
+            db.session.add(new_image)
+            db.session.commit()
+
         # Sends to manage product for convenience
         return redirect('/manage_product')
     return render_template('add_product.html')
@@ -413,7 +427,11 @@ def edit_product(product_id):
             product.name = request.form.get('name')
             product.description = request.form.get('description')
             product.price = float(request.form.get('price'))
-            product.visibility = request.form.get('visibility')
+            
+            # Convert visibility string to enum
+            visibility_str = request.form.get('visibility')
+            if visibility_str:
+                product.visibility = VisibilityEnum[visibility_str]
 
             # 2. Get data from form
             color_codes = request.form.getlist('color_code[]')
@@ -423,6 +441,7 @@ def edit_product(product_id):
             unit_widths = request.form.getlist('unit_width[]')
             heights = request.form.getlist('product_height[]')
             unit_heights = request.form.getlist('unit_height[]')
+            image_urls = request.form.getlist('image_url[]')
 
             # 3. Synchronize Variants
             num_form_variants = len(color_codes)
@@ -439,6 +458,19 @@ def edit_product(product_id):
                     v.unit_width = unit_widths[i]
                     v.product_height = float(heights[i])
                     v.unit_height = unit_heights[i]
+                    
+                    # Handle image for existing variant
+                    if i < len(image_urls) and image_urls[i]:
+                        existing_image = ProductImage.query.filter_by(product_variant_id=v.product_variant_id).first()
+                        if existing_image:
+                            existing_image.image_link = image_urls[i]
+                        else:
+                            new_image = ProductImage(
+                                product_id=product.product_id,
+                                product_variant_id=v.product_variant_id,
+                                image_link=image_urls[i]
+                            )
+                            db.session.add(new_image)
                 
                 elif i < num_form_variants:
                     # ADD new variant (form has more than DB)
@@ -453,6 +485,16 @@ def edit_product(product_id):
                         unit_height=unit_heights[i]
                     )
                     db.session.add(new_variant)
+                    db.session.flush()  # Flush to get the variant ID
+                    
+                    # Handle image for new variant
+                    if i < len(image_urls) and image_urls[i]:
+                        new_image = ProductImage(
+                            product_id=product.product_id,
+                            product_variant_id=new_variant.product_variant_id,
+                            image_link=image_urls[i]
+                        )
+                        db.session.add(new_image)
                 
                 elif i < num_existing_variants:
                     # DELETE removed variant (DB has more than form)
@@ -485,19 +527,24 @@ def view_product(product_id):
     expire_active_discounts()
     product = Product.query.get_or_404(product_id)
     variants = ProductVariant.query.filter_by(product_id=product_id).all()
+    # Eagerly load images for all variants
+    for variant in variants:
+        variant.images = ProductImage.query.filter_by(product_variant_id=variant.product_variant_id).all()
+    
     reviews = Review.query.filter_by(product_id=product_id).all()
-    query = Orders.query.options(joinedload(Orders.items))
     avg_review = db.session.query(func.avg(Review.rating)).filter(Review.product_id==product_id).scalar()
+    avg_review = avg_review if avg_review else 0
 
     count = db.session.query(func.count(Review.review_id)).filter(Review.product_id == product.product_id).scalar()
     product.review_count = count if count else 0
 
+    orders = []
     if session['role'] == 'customer':
-        orders = query.filter_by(customer_id=session['user_id']).all()
+        orders = Orders.query.filter_by(customer_id=session['user_id']).all()
 
     elif session['role'] == 'vendor':
-        orders = query.join(OrderItem).join(Product)\
-                      .filter(Product.vendor_id == session['user_id']).all()
+        orders = db.session.query(Orders).join(OrderItem).join(Product)\
+                      .filter(Product.vendor_id == session['user_id']).distinct().all()
 
     return render_template('view_product.html', product=product, variants=variants, reviews=reviews, orders=orders, avg_review=avg_review)
 
@@ -603,19 +650,15 @@ def checkout(cart_id):
 def order_confirmed(order_id):
     return render_template('order_confirmed.html')
 
-from sqlalchemy.orm import joinedload
-
 @app.route('/orders')
 def get_orders():
-    query = Orders.query.options(joinedload(Orders.items))
-
     if session['role'] == 'customer':
-        orders = query.filter_by(customer_id=session['user_id']).all()
+        orders = Orders.query.filter_by(customer_id=session['user_id']).all()
 
     elif session['role'] == 'vendor':
-        orders = query.join(OrderItem).join(Product)\
-                      .filter(Product.vendor_id == session['user_id']).all()
-        
+        orders = db.session.query(Orders).join(OrderItem).join(Product)\
+                      .filter(Product.vendor_id == session['user_id']).distinct().all()
+    
     return render_template('orders.html', orders=orders)
 
 @app.route('/view_order/<int:order_item_id>')
@@ -654,7 +697,6 @@ def publish_review(order_item_id, action):
 @app.route('/update_order/<int:order_item_id>', methods=['POST'])
 def update_order(order_item_id):
     order_item = OrderItem.query.get_or_404(order_item_id)
-    product_variant = ProductVariant.query.filter_by(product_variant_id = order_item.variant_id).first()
 
     if session.get('role') != 'vendor':
         return redirect('/orders')
@@ -662,8 +704,6 @@ def update_order(order_item_id):
     action = request.form.get("submit_button")
 
     if action == 'reject' or action == 'cancel':
-        if product_variant:
-            product_variant.available += order_item.quantity
         order_item.status = OrderStatus.cancelled 
     
     elif action == 'confirm':
@@ -679,6 +719,126 @@ def update_order(order_item_id):
     
     db.session.commit()
     return redirect(f'/view_order/{order_item_id}')
+
+
+@app.route('/file_claim/<int:order_item_id>', methods=['GET', 'POST'])
+def file_claim(order_item_id):
+    if session.get('role') != 'customer':
+        return redirect('/orders')
+    
+    order_item = OrderItem.query.get_or_404(order_item_id)
+    order = Orders.query.get_or_404(order_item.order_id)
+    
+    if order.customer_id != session['user_id']:
+        return redirect('/orders')
+    
+    if order_item.status != OrderStatus.completed:
+        return redirect('/orders')
+    
+    existing_claim = Claim.query.filter_by(order_item_id=order_item_id).first()
+    
+    if request.method == 'POST':
+        claim_type = request.form.get('claim_type')
+        reason = request.form.get('reason')
+        
+        # Check warranty deadline
+        if claim_type == 'warranty':
+            if order_item.warranty_deadline is None or order_item.warranty_deadline < datetime.utcnow():
+                claim = Claim(
+                    customer_id=session['user_id'],
+                    order_item_id=order_item_id,
+                    product_id=order_item.product_id,
+                    claim_type=claim_type,
+                    reason=reason,
+                    status=ClaimStatus.rejected
+                )
+                db.session.add(claim)
+                db.session.commit()
+                return render_template('file_claim.html', item=order_item, claim=claim, error='Warranty period has expired')
+        
+        # Check return window (7 days)
+        if claim_type == 'return':
+            days_since_order = (datetime.utcnow() - order.order_date).days
+            if days_since_order > 7:
+                claim = Claim(
+                    customer_id=session['user_id'],
+                    order_item_id=order_item_id,
+                    product_id=order_item.product_id,
+                    claim_type=claim_type,
+                    reason=reason,
+                    status=ClaimStatus.rejected
+                )
+                db.session.add(claim)
+                db.session.commit()
+                return render_template('file_claim.html', item=order_item, claim=claim, error='Return window (7 days) has expired')
+        
+        # Create pending claim
+        new_claim = Claim(
+            customer_id=session['user_id'],
+            order_item_id=order_item_id,
+            product_id=order_item.product_id,
+            claim_type=claim_type,
+            reason=reason,
+            status=ClaimStatus.pending
+        )
+        db.session.add(new_claim)
+        db.session.commit()
+        return redirect('/orders')
+    
+    return render_template('file_claim.html', item=order_item, claim=existing_claim)
+
+
+@app.route('/admin/claims')
+def admin_claims():
+    if session.get('role') != 'admin':
+        return redirect('/')
+    
+    status_filter = request.args.get('status', 'pending')
+    try:
+        status_enum = ClaimStatus[status_filter]
+    except KeyError:
+        status_enum = ClaimStatus.pending
+    
+    claims = Claim.query.filter_by(status=status_enum).order_by(Claim.claim_id.desc()).all()
+    
+    # Attach related objects for template
+    for claim in claims:
+        claim._customer = Account.query.get(claim.customer_id)
+        claim._product = Product.query.get(claim.product_id)
+        claim._order_item = OrderItem.query.get(claim.order_item_id)
+    
+    return render_template('admin_claims.html', claims=claims, status_filter=status_filter)
+
+
+@app.route('/admin/claims/<int:claim_id>/process', methods=['POST'])
+def process_claim(claim_id):
+    if session.get('role') != 'admin':
+        return redirect('/')
+    
+    claim = Claim.query.get_or_404(claim_id)
+    action = request.form.get('action')
+    
+    if action == 'confirm':
+        if claim.status == ClaimStatus.pending:
+            claim.status = ClaimStatus.confirmed
+    
+    elif action == 'reject':
+        if claim.status != ClaimStatus.complete:
+            claim.status = ClaimStatus.rejected
+    
+    elif action == 'advance':
+        if claim.status == ClaimStatus.confirmed:
+            claim.status = ClaimStatus.processing
+        elif claim.status == ClaimStatus.processing:
+            claim.status = ClaimStatus.complete
+            # Add back to inventory
+            order_item = OrderItem.query.get(claim.order_item_id)
+            variant = ProductVariant.query.filter_by(product_id=claim.product_id).first()
+            if variant:
+                variant.available += order_item.quantity
+    
+    db.session.commit()
+    return redirect('/admin/claims')
 
 
 @app.route('/request_discount/<int:product_id>', methods=['POST'])

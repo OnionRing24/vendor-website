@@ -65,11 +65,13 @@ CREATE TABLE `cart_item` (
   `cart_item_id` int PRIMARY KEY AUTO_INCREMENT,
   `cart_id` int NOT NULL,
   `product_id` int NOT NULL,
+  `product_variant_id` int NOT NULL,
   `quantity` int DEFAULT 1,
   `price_at_addition` float,
   `visibility` ENUM ('private', 'unlisted', 'public') NOT NULL,
   FOREIGN KEY (`cart_id`) REFERENCES `cart` (`cart_id`),
-  FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`)
+  FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`),
+  FOREIGN KEY (`product_variant_id`) REFERENCES `product_variant` (`product_variant_id`)
 );
 
 -- 5. Orders

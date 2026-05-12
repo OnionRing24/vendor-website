@@ -27,6 +27,9 @@
                     </li>
 
                     <a href="/view_order/{{item.order_item_id}}">View Items</a>
+                    {% if item.status.name == 'completed' %}
+                        <a href="/file_claim/{{item.order_item_id}}">File a Claim</a>
+                    {% endif %}
                 </ul>
             </div>
         {% endfor %}

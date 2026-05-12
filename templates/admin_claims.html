@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block body %}
+
+    <div class="page">
+        <h1>Claims</h1>
+
+        <div class="tab-bar">
+            <a href="/admin/claims?status=pending" class="tab {% if status_filter == 'pending' %}tab--active{% endif %}">Pending</a>
+            <a href="/admin/claims?status=confirmed" class="tab {% if status_filter == 'confirmed' %}tab--active{% endif %}">Confirmed</a>
+            <a href="/admin/claims?status=processing" class="tab {% if status_filter == 'processing' %}tab--active{% endif %}">Processing</a>
+            <a href="/admin/claims?status=complete" class="tab {% if status_filter == 'complete' %}tab--active{% endif %}">Complete</a>
+            <a href="/admin/claims?status=rejected" class="tab {% if status_filter == 'rejected' %}tab--active{% endif %}">Rejected</a>
+        </div>
+
+        {% for claim in claims %}
+            <div class="discount-card">
+                <h3>{{ claim._product.name }}</h3>
+                <p><strong>Customer:</strong> {{ claim._customer.username }}</p>
+                <p><strong>Claim Type:</strong> {{ claim.claim_type }}</p>
+                <p><strong>Status:</strong> {{ claim.status.name }}</p>
+                <p><strong>Reason:</strong> {{ claim.reason }}</p>
+
+                {% if status_filter == 'pending' %}
+                    <form method="POST" action="/admin/claims/{{ claim.claim_id }}/process" style="display: inline;">
+                        <input type="hidden" name="action" value="confirm">
+                        <button type="submit" class="dc-btn dc-btn--approve">Confirm</button>
+                    </form>
+                    <form method="POST" action="/admin/claims/{{ claim.claim_id }}/process" style="display: inline;">
+                        <input type="hidden" name="action" value="reject">
+                        <button type="submit" class="dc-btn dc-btn--reject">Reject</button>
+                    </form>
+                {% elif status_filter == 'confirmed' or status_filter == 'processing' %}
+                    <form method="POST" action="/admin/claims/{{ claim.claim_id }}/process" style="display: inline;">
+                        <input type="hidden" name="action" value="advance">
+                        <button type="submit" class="dc-btn">Advance</button>
+                    </form>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        {% if not claims %}
+            <p>No claims found for this status.</p>
+        {% endif %}
+    </div>
+
+{% endblock %}

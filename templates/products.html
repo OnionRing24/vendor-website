@@ -10,6 +10,11 @@
                 {% if product.visibility.name == 'public' %}
                     <div class="product">
                         <ul>
+                            {% if product.variants and product.variants[0].images and product.variants[0].images[0] %}
+                                <li>
+                                    <img src="{{ product.variants[0].images[0].image_link }}" alt="{{ product.name }}" style="max-width: 100%; height: auto; max-height: 200px;">
+                                </li>
+                            {% endif %}
                             <li><h1>{{product.name}}</h1></li>
                             <li><h2>${{"{:.2f}".format(product.price)}}</h2></li>
                             <li><p>{{product.vendor.username}}</p></li>

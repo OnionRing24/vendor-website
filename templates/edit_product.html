@@ -47,6 +47,7 @@
                             <option value="m" {% if variant.unit_height == 'm' %}selected{% endif %}>Meters</option>
                         </select>
                         <br>
+                        <input type="text" name="image_url[]" value="{% if variant.images %}{{ variant.images[0].image_link }}{% endif %}" placeholder="Image URL (optional)">
                         {% if not loop.first %}
                             <button type="button" onclick="deleteVariant('{{ variant.product_variant_id }}')">Remove</button>
                         {% endif %}
@@ -103,6 +104,8 @@
                     <option value="cm">Centimeters</option>
                     <option value="m">Meters</option>
                 </select>
+                <br>
+                <input type="text" name="image_url[]" placeholder="Image URL (optional)">
                 <br>
             `;
             

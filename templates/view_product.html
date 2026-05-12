@@ -42,6 +42,16 @@
             {% endfor %}
         </div>
 
+        <div class="variant-images">
+            {% for variant in variants %}
+                {% if variant.images and variant.images[0].image_link %}
+<img id="img-{{ variant.product_variant_id }}"
+     src="{{ variant.images[0].image_link if variant.images else '' }}"
+     alt="{{ variant.color_name }}"
+     style="{% if loop.first %}display: block{% else %}display: none{% endif %}; max-width: 100%; height: auto;">                {% endif %}
+            {% endfor %}
+        </div>
+
         <h2>
             <div id="star-container">
                 {% if avg_review == 0 %}
@@ -139,6 +149,14 @@
 
             // Add 'active' class to the clicked button
             btnElement.classList.add('active');
+
+            // Hide all images and show the one matching the selected variant
+            let images = document.querySelectorAll('.variant-images img');
+            images.forEach(img => img.style.display = 'none');
+            let selectedImg = document.getElementById(`img-${val}`);
+            if (selectedImg) {
+                selectedImg.style.display = 'block';
+            }
         }
 
         const rangeInput = document.getElementById('ratingRange');
